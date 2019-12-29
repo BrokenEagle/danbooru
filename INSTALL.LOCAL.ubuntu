@@ -1,0 +1,149 @@
+#!/bin/bash
+
+# Run: curl -L -s https://raw.githubusercontent.com/danbooru/danbooru/master/INSTALL.LOCAL.ubuntu -o install.sh ; chmod +x install.sh ; ./install.sh
+
+export RUBY_VERSION=2.6.5
+export VIPS_VERSION=8.7.0
+
+if [[ "$(whoami)" != "root" ]] ; then
+  echo "You must run this script as root"
+  exit 1
+fi
+
+verlte() {
+  [ "$1" = "`echo -e "$1\n$2" | sort -V | head -n1`" ]
+}
+
+verlt() {
+  [ "$1" = "$2" ] && return 1 || verlte $1 $2
+}
+
+echo "* DANBOORU INSTALLATION SCRIPT"
+echo "*"
+echo "* This script will install all the necessary packages to run Danbooru on an   "
+echo "* Ubuntu server as a local instance."
+echo
+
+# Install packages
+echo "* Installing packages..."
+
+if [ -z "$(ls /etc | grep postgres)" ] ; then
+  apt-get -y install postgresql
+fi
+
+apt-get update
+apt-get -y install apt-transport-https
+apt-get -y install zlib1g-dev libglib2.0-dev
+apt-get -y install libssl-dev build-essential automake libxml2-dev libxslt-dev ncurses-dev sudo libreadline-dev flex bison ragel redis git curl libcurl4-openssl-dev sendmail-bin sendmail net-tools ssh coreutils ffmpeg mkvtoolnix
+apt-get -y install libpq-dev postgresql-client
+apt-get -y install liblcms2-dev libjpeg-turbo8-dev libexpat1-dev libgif-dev libpng-dev libexif-dev
+
+curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+curl -sSL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+apt-get update
+apt-get -y install nodejs yarn
+apt-get remove cmdtest
+
+if [ $? -ne 0 ]; then
+  echo "* Error installing packages; aborting"
+  exit 1
+fi
+
+# compile and install libvips (the version in apt is too old)
+cd /tmp
+wget -q https://github.com/libvips/libvips/releases/download/v$VIPS_VERSION/vips-$VIPS_VERSION.tar.gz
+tar xzf vips-$VIPS_VERSION.tar.gz
+cd vips-$VIPS_VERSION
+./configure --prefix=/usr
+make install
+ldconfig
+
+# Create user account
+useradd -m danbooru
+chsh -s /bin/bash danbooru
+usermod -G danbooru,sudo danbooru
+
+# Clone the repository
+echo "* Cloning Danbooru repository..."
+sudo -u danbooru git clone https://github.com/danbooru/danbooru.git ~danbooru/danbooru
+
+# Install rbenv
+echo "* Installing rbenv..."
+cd /tmp
+sudo -u danbooru git clone git://github.com/sstephenson/rbenv.git ~danbooru/.rbenv
+sudo -u danbooru touch ~danbooru/.bash_profile
+echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~danbooru/.bash_profile
+echo 'eval "$(rbenv init -)"' >> ~danbooru/.bash_profile
+sudo -u danbooru mkdir -p ~danbooru/.rbenv/plugins
+sudo -u danbooru git clone git://github.com/sstephenson/ruby-build.git ~danbooru/.rbenv/plugins/ruby-build
+sudo -u danbooru bash -l -c "RUBY_CONFIGURE_OPTS=--disable-install-doc rbenv install --verbose $RUBY_VERSION"
+sudo -u danbooru bash -l -c "rbenv global $RUBY_VERSION"
+
+# Generate secret token and secret key
+echo "* Generating secret keys..."
+sudo -u danbooru mkdir ~danbooru/.danbooru/
+sudo -u danbooru sh -c 'openssl rand -hex 32 > ~danbooru/.danbooru/secret_token'
+sudo -u danbooru sh -c 'openssl rand -hex 32 > ~danbooru/.danbooru/session_secret_key'
+chmod 600 ~danbooru/.danbooru/*
+
+# Install gems
+echo "* Installing gems..."
+sudo -u danbooru bash -l -c 'gem install --no-document bundler'
+
+echo "* Install configuration scripts..."
+
+# Update PostgreSQL
+for VERSION in $(ls /etc/postgresql) ; do
+  sudo -u danbooru cp ~danbooru/danbooru/script/install/postgresql_hba_conf /etc/postgresql/$VERSION/main/pg_hba.conf
+done
+/etc/init.d/postgresql restart
+sudo -u postgres createuser -s danbooru
+sudo -u danbooru createdb danbooru2
+
+# Setup danbooru account
+echo "* Enter a new password for the danbooru account"
+passwd danbooru
+
+echo "* Setting up SSH keys for the danbooru account"
+sudo -u danbooru ssh-keygen -t rsa -f ~danbooru/.ssh/id_rsa -N ""
+sudo -u danbooru touch ~danbooru/.ssh/authorized_keys
+sudo -u danbooru cat ~danbooru/.ssh/id_rsa.pub >> ~danbooru/.ssh/authorized_keys
+sudo -u danbooru chmod 600 ~danbooru/.ssh/authorized_keys
+
+sudo -u danbooru cp ~danbooru/danbooru/script/install/database.yml.templ ~danbooru/danbooru/config/database.yml
+sudo -u danbooru cp ~danbooru/danbooru/script/install/danbooru_local_config.rb.templ ~danbooru/danbooru/config/danbooru_local_config.rb
+
+echo "* Executing Danbooru bundle setup"
+cd ~danbooru/danbooru
+sudo -u danbooru bundle install
+sudo -u danbooru bundle exec rake db:create db:migrate
+
+echo "* Almost done! You are now ready to run the server locally"
+echo "* by running the following commands in the danbooru directory:"
+echo "*"
+echo "*   bundle exec rails server --binding 0.0.0.0"
+echo "*"
+echo "* This will start a web process running on port 3000 that you can"
+echo "* connect to using the IP address of the server."
+echo "*"
+echo "* Example: http://192.168.56.100:3000"
+echo "*"
+echo "* This is useful for development and testing purposes."
+read -p "Press [enter] to continue..."
+echo "* In order to do development for the Danbooru repository,"
+echo "* log into Github and fork https://github.com/danbooru/danbooru into"
+echo "* your own repository. Then update the origin and set an upstream:"
+echo "* with the following commands in the danbooru directory:"
+echo "*"
+echo "*   git remote rename origin upstream"
+echo "*...git remote add origin https://github.com/YOUR_GITHUB_USERNAME/danbooru.git"
+echo "*"
+echo "* Get the latest updates from the original Danbooru repsitory"
+echo "* with the following commands while in the master branch:"
+echo "*"
+echo "*   git fetch upstream"
+echo "*   git merge upstream/master"
+echo "*"
+echo "* If something breaks post about it on the Danbooru Github. Good luck!"
+echo "* https://github.com/danbooru/danbooru/wiki/Ubuntu-Installation-Help-Guide"
