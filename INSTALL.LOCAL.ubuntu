@@ -27,11 +27,10 @@ echo
 # Install packages
 echo "* Installing packages..."
 
+apt-get update
 if [ -z "$(ls /etc | grep postgres)" ] ; then
   apt-get -y install postgresql
 fi
-
-apt-get update
 apt-get -y install apt-transport-https
 apt-get -y install zlib1g-dev libglib2.0-dev
 apt-get -y install libssl-dev build-essential automake libxml2-dev libxslt-dev ncurses-dev sudo libreadline-dev flex bison ragel redis git curl libcurl4-openssl-dev sendmail-bin sendmail net-tools ssh coreutils ffmpeg mkvtoolnix
@@ -41,14 +40,8 @@ apt-get -y install liblcms2-dev libjpeg-turbo8-dev libexpat1-dev libgif-dev libp
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
 curl -sSL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-apt-get update
 apt-get -y install nodejs yarn
 apt-get remove cmdtest
-
-if [ $? -ne 0 ]; then
-  echo "* Error installing packages; aborting"
-  exit 1
-fi
 
 # compile and install libvips (the version in apt is too old)
 cd /tmp
@@ -67,6 +60,7 @@ usermod -G danbooru,sudo danbooru
 # Clone the repository
 echo "* Cloning Danbooru repository..."
 sudo -u danbooru git clone https://github.com/danbooru/danbooru.git ~danbooru/danbooru
+sudo -u danbooru git remote rename origin upstream
 
 # Install rbenv
 echo "* Installing rbenv..."
@@ -134,9 +128,8 @@ read -p "Press [enter] to continue..."
 echo "* In order to do development for the Danbooru repository,"
 echo "* log into Github and fork https://github.com/danbooru/danbooru into"
 echo "* your own repository. Then update the origin and set an upstream:"
-echo "* with the following commands in the danbooru directory:"
+echo "* with the following command in the danbooru directory:"
 echo "*"
-echo "*   git remote rename origin upstream"
 echo "*...git remote add origin https://github.com/YOUR_GITHUB_USERNAME/danbooru.git"
 echo "*"
 echo "* Get the latest updates from the original Danbooru repsitory"
