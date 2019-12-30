@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Run: curl -L -s https://raw.githubusercontent.com/danbooru/danbooru/master/INSTALL.LOCAL.ubuntu -o install.sh ; chmod +x install.sh ; ./install.sh
+# Run: curl -sSL https://raw.githubusercontent.com/danbooru/danbooru/master/INSTALL.LOCAL.ubuntu -o install.sh ; chmod +x install.sh ; ./install.sh
 
 export RUBY_VERSION=2.6.5
 export VIPS_VERSION=8.7.0
@@ -9,14 +9,6 @@ if [[ "$(whoami)" != "root" ]] ; then
   echo "You must run this script as root"
   exit 1
 fi
-
-verlte() {
-  [ "$1" = "`echo -e "$1\n$2" | sort -V | head -n1`" ]
-}
-
-verlt() {
-  [ "$1" = "$2" ] && return 1 || verlte $1 $2
-}
 
 echo "* DANBOORU INSTALLATION SCRIPT"
 echo "*"
@@ -28,20 +20,20 @@ echo
 echo "* Installing packages..."
 
 apt-get update
-if [ -z "$(ls /etc | grep postgres)" ] ; then
-  apt-get -y install postgresql
-fi
 apt-get -y install apt-transport-https
 apt-get -y install zlib1g-dev libglib2.0-dev
-apt-get -y install libssl-dev build-essential automake libxml2-dev libxslt-dev ncurses-dev sudo libreadline-dev flex bison ragel redis git curl libcurl4-openssl-dev sendmail-bin sendmail net-tools ssh coreutils ffmpeg mkvtoolnix
-apt-get -y install libpq-dev postgresql-client
+apt-get -y install libssl-dev libxml2-dev libxslt-dev libreadline-dev redis libcurl4-openssl-dev sendmail-bin sendmail ffmpeg mkvtoolnix
+apt-get -y install postgresql libpq-dev
 apt-get -y install liblcms2-dev libjpeg-turbo8-dev libexpat1-dev libgif-dev libpng-dev libexif-dev
 
-curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+# Setup for yarn install
+curl -sSL https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+# Setup for nodejs install
 curl -sSL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+
+apt-get update
 apt-get -y install nodejs yarn
-apt-get remove cmdtest
 
 # compile and install libvips (the version in apt is too old)
 cd /tmp
@@ -89,11 +81,21 @@ echo "* Install configuration scripts..."
 
 # Update PostgreSQL
 for VERSION in $(ls /etc/postgresql) ; do
-  sudo -u danbooru cp ~danbooru/danbooru/script/install/postgresql_hba_conf /etc/postgresql/$VERSION/main/pg_hba.conf
+  if [ -d "/etc/postgresql/$VERSION" ] && [ -d "/etc/postgresql/$VERSION/main" ] ; then
+    sudo -u danbooru cp ~danbooru/danbooru/script/install/postgresql_hba_conf /etc/postgresql/$VERSION/main/pg_hba.conf
+  fi
 done
+
+# Necessary to build parser extension
+apt install postgresql-server-dev-all -y
+git clone https://github.com/r888888888/test_parser.git /tmp/test_parser
+cd /tmp/test_parser
+make install
+
 /etc/init.d/postgresql restart
 sudo -u postgres createuser -s danbooru
 sudo -u danbooru createdb danbooru2
+
 
 # Setup danbooru account
 echo "* Enter a new password for the danbooru account"
@@ -108,13 +110,16 @@ sudo -u danbooru chmod 600 ~danbooru/.ssh/authorized_keys
 sudo -u danbooru cp ~danbooru/danbooru/script/install/database.yml.templ ~danbooru/danbooru/config/database.yml
 sudo -u danbooru cp ~danbooru/danbooru/script/install/danbooru_local_config.rb.templ ~danbooru/danbooru/config/danbooru_local_config.rb
 
-echo "* Executing Danbooru bundle setup"
+echo "* Executing Danbooru repository setup"
 cd ~danbooru/danbooru
-sudo -u danbooru bundle install
-sudo -u danbooru bundle exec rake db:create db:migrate
+sudo -u danbooru yarn install --check-files
+sudo -u danbooru bash -l -c 'bundle install'
+sudo -u danbooru bash -l -c 'bundle exec rake db:create db:migrate'
 
+clear
 echo "* Almost done! You are now ready to run the server locally"
-echo "* by running the following commands in the danbooru directory:"
+echo "* by running the following commands in the danbooru directory"
+echo "* after logging into the danbooru account:"
 echo "*"
 echo "*   bundle exec rails server --binding 0.0.0.0"
 echo "*"
@@ -125,10 +130,12 @@ echo "* Example: http://192.168.56.100:3000"
 echo "*"
 echo "* This is useful for development and testing purposes."
 read -p "Press [enter] to continue..."
+
+clear
 echo "* In order to do development for the Danbooru repository,"
 echo "* log into Github and fork https://github.com/danbooru/danbooru into"
-echo "* your own repository. Then update the origin and set an upstream:"
-echo "* with the following command in the danbooru directory:"
+echo "* your own repository. Then add an origin remote source with the"
+echo "* following command in the danbooru directory:"
 echo "*"
 echo "*...git remote add origin https://github.com/YOUR_GITHUB_USERNAME/danbooru.git"
 echo "*"
