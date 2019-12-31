@@ -21,10 +21,10 @@ echo "* Installing packages..."
 
 apt-get update
 apt-get -y install apt-transport-https
-apt-get -y install zlib1g-dev libglib2.0-dev
-apt-get -y install libssl-dev libxml2-dev libxslt-dev libreadline-dev redis libcurl4-openssl-dev sendmail-bin sendmail ffmpeg mkvtoolnix
-apt-get -y install postgresql libpq-dev
+apt-get -y install build-essential redis sendmail-bin sendmail ffmpeg mkvtoolnix
+apt-get -y install libssl-dev libxml2-dev libxslt-dev libreadline-dev  libcurl4-openssl-dev
 apt-get -y install liblcms2-dev libjpeg-turbo8-dev libexpat1-dev libgif-dev libpng-dev libexif-dev
+apt-get -y install postgresql libpq-dev
 
 # Setup for yarn install
 curl -sSL https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
@@ -49,22 +49,30 @@ useradd -m danbooru
 chsh -s /bin/bash danbooru
 usermod -G danbooru,sudo danbooru
 
+# Necessary to build parser extension
+apt install postgresql-server-dev-all -y
+git clone https://github.com/r888888888/test_parser.git /tmp/test_parser
+cd /tmp/test_parser
+make install
+
 # Clone the repository
 echo "* Cloning Danbooru repository..."
 sudo -u danbooru git clone https://github.com/danbooru/danbooru.git ~danbooru/danbooru
+cd ~danbooru/danbooru
 sudo -u danbooru git remote rename origin upstream
 
+RBENV_SETUP='export PATH="$HOME/.rbenv/bin:$PATH";rbenv init -'
 # Install rbenv
 echo "* Installing rbenv..."
-cd /tmp
+cd ~danbooru
 sudo -u danbooru git clone git://github.com/sstephenson/rbenv.git ~danbooru/.rbenv
 sudo -u danbooru touch ~danbooru/.bash_profile
 echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~danbooru/.bash_profile
 echo 'eval "$(rbenv init -)"' >> ~danbooru/.bash_profile
 sudo -u danbooru mkdir -p ~danbooru/.rbenv/plugins
 sudo -u danbooru git clone git://github.com/sstephenson/ruby-build.git ~danbooru/.rbenv/plugins/ruby-build
-sudo -u danbooru bash -l -c "RUBY_CONFIGURE_OPTS=--disable-install-doc rbenv install --verbose $RUBY_VERSION"
-sudo -u danbooru bash -l -c "rbenv global $RUBY_VERSION"
+sudo -i -u danbooru bash -l -c "RUBY_CONFIGURE_OPTS=--disable-install-doc rbenv install --verbose $RUBY_VERSION"
+sudo -i -u danbooru bash -l -c "rbenv global $RUBY_VERSION"
 
 # Generate secret token and secret key
 echo "* Generating secret keys..."
@@ -75,31 +83,20 @@ chmod 600 ~danbooru/.danbooru/*
 
 # Install gems
 echo "* Installing gems..."
-sudo -u danbooru bash -l -c 'gem install --no-document bundler'
+sudo -i -u danbooru bash -l -c 'gem install --no-document bundler'
 
 echo "* Install configuration scripts..."
 
 # Update PostgreSQL
 for VERSION in $(ls /etc/postgresql) ; do
   if [ -d "/etc/postgresql/$VERSION" ] && [ -d "/etc/postgresql/$VERSION/main" ] ; then
-    sudo -u danbooru cp ~danbooru/danbooru/script/install/postgresql_hba_conf /etc/postgresql/$VERSION/main/pg_hba.conf
+    cp ~danbooru/danbooru/script/install/postgresql_hba_conf /etc/postgresql/$VERSION/main/pg_hba.conf
   fi
 done
-
-# Necessary to build parser extension
-apt install postgresql-server-dev-all -y
-git clone https://github.com/r888888888/test_parser.git /tmp/test_parser
-cd /tmp/test_parser
-make install
 
 /etc/init.d/postgresql restart
 sudo -u postgres createuser -s danbooru
 sudo -u danbooru createdb danbooru2
-
-
-# Setup danbooru account
-echo "* Enter a new password for the danbooru account"
-passwd danbooru
 
 echo "* Setting up SSH keys for the danbooru account"
 sudo -u danbooru ssh-keygen -t rsa -f ~danbooru/.ssh/id_rsa -N ""
@@ -112,9 +109,14 @@ sudo -u danbooru cp ~danbooru/danbooru/script/install/danbooru_local_config.rb.t
 
 echo "* Executing Danbooru repository setup"
 cd ~danbooru/danbooru
-sudo -u danbooru yarn install --check-files
-sudo -u danbooru bash -l -c 'bundle install'
-sudo -u danbooru bash -l -c 'bundle exec rake db:create db:migrate'
+sudo -i -u danbooru bash -l -c 'cd ~/danbooru;yarn install --check-files'
+sudo -i -u danbooru bash -l -c 'cd ~/danbooru;bundle install'
+sudo -i -u danbooru bash -l -c 'cd ~/danbooru;bundle exec rake db:create db:migrate'
+
+# Setup danbooru account
+clear
+echo "* Enter a new password for the danbooru account"
+passwd danbooru
 
 clear
 echo "* Almost done! You are now ready to run the server locally"
@@ -137,7 +139,7 @@ echo "* log into Github and fork https://github.com/danbooru/danbooru into"
 echo "* your own repository. Then add an origin remote source with the"
 echo "* following command in the danbooru directory:"
 echo "*"
-echo "*...git remote add origin https://github.com/YOUR_GITHUB_USERNAME/danbooru.git"
+echo "*   git remote add origin https://github.com/YOUR_GITHUB_USERNAME/danbooru.git"
 echo "*"
 echo "* Get the latest updates from the original Danbooru repsitory"
 echo "* with the following commands while in the master branch:"
