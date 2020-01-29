@@ -82,6 +82,11 @@ module Sources
         return super
       end
 
+      def dtext_url
+        return nil if illust_id.blank?
+        "seiga ##{illust_id}"
+      end
+
       def canonical_url
         image_url
       end

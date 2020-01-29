@@ -96,6 +96,11 @@ module Sources::Strategies
       "https://twitter.com/#{artist_name}/status/#{status_id}"
     end
 
+    def dtext_url
+      return nil if status_id.blank?
+      "twitter ##{status_id}"
+    end
+
     def profile_url
       return nil if artist_name.blank?
       "https://twitter.com/#{artist_name}"

@@ -71,6 +71,13 @@ module Sources
         "https://#{site_name}/post/show/#{post_id}"
       end
 
+      def dtext_url
+        return nil if post_id.blank?
+        # Konachan does not have a DText link at this time.
+        return nil if site_name != "yande.re"
+        "yandere ##{post_id}"
+      end
+
       def canonical_url
         image_url
       end

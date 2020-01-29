@@ -121,6 +121,11 @@ module Sources
         end
       end
 
+      def dtext_url
+        return nil if deviation_id.blank?
+        "deviantart ##{deviation_id}"
+      end
+
       def page_url_from_image_url
         artist, title, id = artist_name_from_url, title_from_url, deviation_id
 

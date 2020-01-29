@@ -136,6 +136,11 @@ module Sources
         nil
       end
 
+      def dtext_url
+        return nil if illust_id.blank?
+        "pixiv ##{illust_id}"
+      end
+
       def canonical_url
         return image_url
       end

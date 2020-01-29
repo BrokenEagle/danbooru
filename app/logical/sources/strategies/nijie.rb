@@ -100,6 +100,11 @@ module Sources
         "https://nijie.info/view.php?id=#{illust_id}"
       end
 
+      def dtext_url
+        return nil if illust_id.blank?
+        "nijie ##{illust_id}"
+      end
+
       def profile_url
         return nil if artist_id.blank?
         "https://nijie.info/members.php?id=#{artist_id}"

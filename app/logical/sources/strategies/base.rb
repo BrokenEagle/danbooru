@@ -101,6 +101,11 @@ module Sources
         page_url || image_url
       end
 
+      # This is the short form of the site URL as used with DText.
+      def dtext_url
+        nil
+      end
+
       # A name to suggest as the artist's tag name when creating a new artist.
       # This should usually be the artist's account name.
       def tag_name
@@ -273,6 +278,7 @@ module Sources
           :preview_urls => preview_urls,
           :page_url => page_url,
           :canonical_url => canonical_url,
+          :dtext_url => dtext_url,
           :normalized_for_artist_finder_url => normalize_for_artist_finder,
           :tags => tags,
           :normalized_tags => normalized_tags,

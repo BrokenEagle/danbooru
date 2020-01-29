@@ -41,6 +41,12 @@ module Sources::Strategies
       return super
     end
 
+    def dtext_url
+      illust_id = PawooApiClient::Status.is_match?(url)
+      return "pawoo ##{illust_id}" if illust_id
+      return super
+    end
+
     # https://pawoo.net/@evazion
     # https://pawoo.net/web/accounts/47806
     def profile_url

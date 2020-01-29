@@ -56,6 +56,11 @@ module Sources::Strategies
       "https://www.artstation.com/#{artist_name}"
     end
 
+    def dtext_url
+      return nil if project_id.blank?
+      "artstation ##{project_id}"
+    end
+
     def artist_name
       artist_name_from_url || api_response.dig(:user, :username)
     end
