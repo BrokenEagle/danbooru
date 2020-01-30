@@ -4,9 +4,13 @@ class ArtistUrlsController < ApplicationController
 
   def index
     @artist_urls = ArtistUrl.includes(:artist).paginated_search(params)
+    #respond_with(@artist_urls)
     respond_with(@artist_urls) do |format|
-      format.json { render json: @artist_urls.to_json(include: "artist") }
-      format.xml { render xml: @artist_urls.to_xml(include: "artist", root: "artist-urls") }
+      #binding.pry
+      #format.json { render json: @artist_urls.to_json(include: "artist") }
+      format.json { render json: @artist_urls.to_json(format_params) }
+      #format.json { render json: @artist_urls.to_json(render_params) }
+      format.xml { render xml: @artist_urls.to_xml(format_params) }
     end
   end
 
@@ -17,6 +21,21 @@ class ArtistUrlsController < ApplicationController
   end
 
   private
+
+  def format_params
+    @format_params ||= begin
+      #binding.pry
+      if params[:only]
+        param_hash = SerializableParameters.process_only(params[:only],@artist_urls)
+      else
+        param_hash = {include: [:artist]}
+      end
+      if request.format.symbol == :xml
+        param_hash[:root] = "artist-urls"
+      end
+      param_hash
+    end
+  end
 
   def artist_url_params
     permitted_params = %i[is_active]

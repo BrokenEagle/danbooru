@@ -336,7 +336,14 @@ class ApplicationRecord < ActiveRecord::Base
       api_attributes & data_attributes
     end
 
+
+    def permitted_includes
+      []
+    end
+
     def serializable_hash(options = {})
+      return super(options)
+      binding.pry
       options ||= {}
       options[:only] ||= []
       options[:include] ||= []
@@ -357,9 +364,11 @@ class ApplicationRecord < ActiveRecord::Base
       options[:only] = attributes
       options[:methods] = methods
       options[:include] = includes
-
+      
       hash = super(options)
       hash.transform_keys { |key| key.delete("?") }
+      #binding.pry
+      hash
     end
   end
 
