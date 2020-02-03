@@ -223,4 +223,8 @@ class ForumPost < ApplicationRecord
   def dtext_shortlink
     "forum ##{id}"
   end
+
+  def permitted_includes
+    [:dtext_links, :topic]
+  end
 end

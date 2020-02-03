@@ -71,4 +71,8 @@ class DtextLink < ApplicationRecord
     # because it can't index values that take up more than 1/3 of an 8kb page.
     self.link_target = self.link_target.truncate(2048, omission: "")
   end
+
+  def permitted_includes
+    [:model]
+  end
 end

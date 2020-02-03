@@ -177,4 +177,8 @@ class ForumTopic < ApplicationRecord
   def update_orignal_post
     original_post&.update_columns(:updater_id => updater.id, :updated_at => Time.now)
   end
+
+  def permitted_includes
+    [:posts]
+  end
 end

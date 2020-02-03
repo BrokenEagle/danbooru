@@ -342,10 +342,18 @@ class ApplicationRecord < ActiveRecord::Base
     end
 
     def serializable_hash(options = {})
+      #binding.pry
+      if options[:only] && options[:only].is_a?(String)
+        options = SerializableParameters.process_only(options[:only], self)
+      end
+      #binding.pry
+      hash = super(options)
+      hash.transform_keys { |key| key.delete("?") }
+      return hash
       return super(options)
       binding.pry
       options ||= {}
-      options[:only] ||= []
+      
       options[:include] ||= []
       options[:methods] ||= []
 

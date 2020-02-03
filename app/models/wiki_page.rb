@@ -250,4 +250,8 @@ class WikiPage < ApplicationRecord
       title
     end
   end
+
+  def permitted_includes
+    [:dtext_links, :versions]
+  end
 end

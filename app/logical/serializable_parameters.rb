@@ -13,6 +13,7 @@ class SerializableParameters
     only_array.each do |item|
       match = item.match(/(\w+)\[(.+?)\]$/)
       item_sym = item.to_sym
+      #binding.pry
       if match && object.permitted_includes.include?(match[1].to_sym) && !was_seen
         item_sym = match[1].to_sym
         item_array = self.split_only_string(match[2])
