@@ -322,6 +322,34 @@ class ApplicationRecord < ActiveRecord::Base
         @api_attributes += including
         @api_attributes
       end
+
+      def only_includes(params, format)
+        #binding.pry
+        if params[:only]
+          includes_hash = SerializableParameters.includes_hash(params[:only], self.name)
+        else
+          includes_hash = {}
+        end
+        includes(includes_hash)
+      end
+
+      def available_includes
+        reflections.keys.map(&:to_sym)
+      end
+
+      def associated_models(name)
+        if reflections[name].options[:polymorphic]
+          associated_models = reflections[name].active_record.try(:model_types) || []
+        elsif reflections[name].options[:class_name]
+          associated_models = [reflections[name].options[:class_name]]
+        else
+          associated_models = [reflections[name].name.to_s.singularize.camelize]
+        end
+      end
+
+      def associated_includes(name)
+        associated_models(name).reduce([]) { |sum, assoc| eval(assoc).available_includes }
+      end
     end
 
     def api_attributes

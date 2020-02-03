@@ -3,7 +3,7 @@ class ArtistUrlsController < ApplicationController
   before_action :member_only, except: [:index]
 
   def index
-    @artist_urls = ArtistUrl.includes(:artist).paginated_search(params)
+    @artist_urls = ArtistUrl.includes({artist: [:urls]}).paginated_search(params)
     #respond_with(@artist_urls)
     respond_with(@artist_urls) do |format|
       #binding.pry

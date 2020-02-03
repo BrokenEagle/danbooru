@@ -8,6 +8,10 @@ class DtextLink < ApplicationRecord
   scope :wiki_page, -> { where(model_type: "WikiPage") }
   scope :forum_post, -> { where(model_type: "ForumPost") }
 
+  def self.model_types
+    %w[WikiPage ForumPost]
+  end
+
   def self.new_from_dtext(dtext)
     links = []
 

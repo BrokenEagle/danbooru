@@ -19,6 +19,10 @@ class ModerationReport < ApplicationRecord
     !Rails.env.production?
   end
 
+  def self.model_types
+    %w[User Dmail Comment ForumPost]
+  end
+
   def forum_topic_title
     "Reports requiring moderation"
   end

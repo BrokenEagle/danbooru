@@ -59,4 +59,35 @@ class SerializableParameters
     end
     only_array << only_string[Range.new(offset, -1)]
   end
+
+  def self.includes_hash(only_string, model_name)
+    only_array = self.split_only_string(only_string)
+    self.includes_hash_array(only_array, model_name)
+  end
+
+  def self.includes_hash_array(only_array, model_name, seen_objects = [])
+    only_hash = {}
+    model = eval(model_name)
+    available_includes = model.available_includes
+    # Attributes and/or methods may be included in the final pass, but not includes
+    was_seen = seen_objects.include?(model_name)
+    only_array.each do |item|
+      match = item.match(/(\w+)\[(.+?)\]$/)
+      item_sym = item.to_sym
+      #binding.pry
+      if match && available_includes.include?(match[1].to_sym) && !was_seen
+        seen_objects << model_name
+        item_sym = match[1].to_sym
+        item_array = self.split_only_string(match[2])
+        model.associated_models(match[1]).each do |m|
+          item_hash = self.includes_hash_array(item_array, m, seen_objects)
+          only_hash.merge!(Hash[item_sym, item_hash])
+        end
+      elsif available_includes.include?(item_sym) && !was_seen
+        only_hash.merge!(Hash[item_sym, []])
+      end
+    end
+    only_hash
+  end
+
 end
