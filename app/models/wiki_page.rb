@@ -252,6 +252,6 @@ class WikiPage < ApplicationRecord
   end
 
   def permitted_includes
-    [:dtext_links, :versions]
+    [:tag, :artist, :versions, :dtext_links]
   end
 end

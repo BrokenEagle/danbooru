@@ -5,6 +5,7 @@ class SerializableParameters
   end
 
   def self.process_only_array(only_array, object, seen_objects = [])
+    return {} if object.nil?
     only_hash = {only: [], include: [], methods: []}
     object = object[0] if object.is_a?(ActiveRecord::Relation)
     # Attributes and/or methods may be included in the final pass, but not includes
@@ -14,7 +15,7 @@ class SerializableParameters
       match = item.match(/(\w+)\[(.+?)\]$/)
       item_sym = item.to_sym
       #binding.pry
-      if match && object.permitted_includes.include?(match[1].to_sym) && !was_seen
+      if match && object.available_includes.include?(match[1].to_sym) && !was_seen
         item_sym = match[1].to_sym
         item_array = self.split_only_string(match[2])
         item_object = object.send(item_sym)
@@ -22,12 +23,13 @@ class SerializableParameters
         seen_objects << object.class.name
         item_hash = self.process_only_array(item_array, item_object, seen_objects)
         only_hash[:include] << Hash[item_sym, item_hash]
-      elsif object.permitted_includes.include?(item_sym) && !was_seen
+      elsif object.available_includes.include?(item_sym) && !was_seen
         only_hash[:include] << item_sym
       elsif attributes.include?(item_sym)
         only_hash[:only] << item_sym
       elsif methods.include?(item_sym)
         only_hash[:methods] << item_sym
+        only_hash[:only] << item_sym
       end
     end
     only_hash.delete(:include) if only_hash[:include].empty?

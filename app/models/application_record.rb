@@ -341,41 +341,33 @@ class ApplicationRecord < ActiveRecord::Base
       []
     end
 
-    def serializable_hash(options = {})
-      #binding.pry
-      if options[:only] && options[:only].is_a?(String)
-        options = SerializableParameters.process_only(options[:only], self)
+    def available_includes
+      @available_includes ||= methods.grep(/^autosave_associated_records_for_\w+$/).map do |sym|
+        sym.to_s.match(/^autosave_associated_records_for_(\w+)$/)[1].to_sym
       end
-      #binding.pry
-      hash = super(options)
-      hash.transform_keys { |key| key.delete("?") }
-      return hash
-      return super(options)
-      binding.pry
+    end
+
+    def serializable_hash(options = {})
       options ||= {}
-      
-      options[:include] ||= []
-      options[:methods] ||= []
+      if options[:only] && options[:only].is_a?(String)
+        options.merge!(SerializableParameters.process_only(options[:only], self))
+      else
+        options[:methods] ||= []
+        attributes, methods = api_attributes.partition { |attr| has_attribute?(attr) }
+        methods += options[:methods]
+        options[:only] ||= attributes + methods
 
-      options[:only] = options[:only].map(&:to_sym)
-
-      attributes, methods = api_attributes.partition { |attr| has_attribute?(attr) }
-      methods += options[:methods]
-      includes = options[:include]
-
-      if options[:only].present?
         attributes &= options[:only]
         methods &= options[:only]
-        includes &= options[:only]
+
+        options[:only] = attributes
+        options[:methods] = methods
+
+        options.delete(:methods) if options[:methods].empty?
       end
 
-      options[:only] = attributes
-      options[:methods] = methods
-      options[:include] = includes
-      
       hash = super(options)
       hash.transform_keys { |key| key.delete("?") }
-      #binding.pry
       hash
     end
   end

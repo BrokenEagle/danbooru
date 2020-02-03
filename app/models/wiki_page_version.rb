@@ -29,4 +29,8 @@ class WikiPageVersion < ApplicationRecord
   def category_name
     Tag.category_for(title)
   end
+
+  def permitted_includes
+    [:wiki_page]
+  end
 end
