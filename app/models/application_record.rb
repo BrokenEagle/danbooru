@@ -323,8 +323,7 @@ class ApplicationRecord < ActiveRecord::Base
         @api_attributes
       end
 
-      def only_includes(params, format)
-        #binding.pry
+      def only_includes(params)
         if params[:only]
           includes_hash = SerializableParameters.includes_hash(params[:only], self.name)
         else
@@ -378,7 +377,7 @@ class ApplicationRecord < ActiveRecord::Base
     def serializable_hash(options = {})
       options ||= {}
       if options[:only] && options[:only].is_a?(String)
-        options.merge!(SerializableParameters.process_only(options[:only], self))
+        options.merge!(SerializableParameters.process_only(options[:only], self.class.name))
       else
         options[:methods] ||= []
         attributes, methods = api_attributes.partition { |attr| has_attribute?(attr) }

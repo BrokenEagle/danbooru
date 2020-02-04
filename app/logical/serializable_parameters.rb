@@ -1,29 +1,32 @@
 class SerializableParameters
-  def self.process_only(only_string, object)
+  def self.process_only(only_string, model_name)
     only_array = self.split_only_string(only_string)
-    self.process_only_array(only_array, object)
+    self.process_only_array(only_array, model_name)
   end
 
-  def self.process_only_array(only_array, object, seen_objects = [])
-    return {} if object.nil?
+  def self.process_only_array(only_array, model_name, seen_objects = [])
     only_hash = {only: [], include: [], methods: []}
-    object = object[0] if object.is_a?(ActiveRecord::Relation)
+    model = eval(model_name)
+    available_includes = model.available_includes
+    attributes, methods = model.api_attributes.partition { |attr| model.has_attribute?(attr) }
     # Attributes and/or methods may be included in the final pass, but not includes
-    was_seen = seen_objects.include?(object.class.name)
-    attributes, methods = object.api_attributes.partition { |attr| object.has_attribute?(attr) }
+    was_seen = seen_objects.include?(model_name)
     only_array.each do |item|
       match = item.match(/(\w+)\[(.+?)\]$/)
       item_sym = item.to_sym
-      #binding.pry
-      if match && object.available_includes.include?(match[1].to_sym) && !was_seen
+      if match && available_includes.include?(match[1].to_sym) && !was_seen
+        seen_objects << model_name
         item_sym = match[1].to_sym
         item_array = self.split_only_string(match[2])
-        item_object = object.send(item_sym)
-        item_object = item_object[0] if item_object.is_a?(ActiveRecord::Relation)
-        seen_objects << object.class.name
-        item_hash = self.process_only_array(item_array, item_object, seen_objects)
-        only_hash[:include] << Hash[item_sym, item_hash]
-      elsif object.available_includes.include?(item_sym) && !was_seen
+        model.associated_models(match[1]).each do |m|
+          item_hash = self.process_only_array(item_array, m, seen_objects)
+          only_hash[:include] << Hash[item_sym, item_hash]
+        end
+        #item_object = object.send(item_sym)
+        #item_object = item_object[0] if item_object.is_a?(ActiveRecord::Relation)
+        #item_hash = self.process_only_array(item_array, item_object, seen_objects)
+        #only_hash[:include] << Hash[item_sym, item_hash]
+      elsif available_includes.include?(item_sym) && !was_seen
         only_hash[:include] << item_sym
       elsif attributes.include?(item_sym)
         only_hash[:only] << item_sym
