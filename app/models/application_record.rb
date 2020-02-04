@@ -7,10 +7,8 @@ class ApplicationRecord < ActiveRecord::Base
         extending(PaginationExtension).paginate(*options)
       end
 
-      def paginated_search(params, defaults: {}, count_pages: params[:search].present?)
+      def paginated_search(params, count_pages: params[:search].present?)
         search_params = params.fetch(:search, {}).permit!
-        search_params = defaults.merge(search_params).with_indifferent_access
-
         search(search_params).paginate(params[:page], limit: params[:limit], search_count: count_pages)
       end
     end
@@ -95,7 +93,7 @@ class ApplicationRecord < ActiveRecord::Base
       end
 
       def search_boolean_attribute(attribute, params)
-        return all unless params.key?(attribute)
+        return all unless params[attribute]
 
         value = params[attribute].to_s
         if value.truthy?
@@ -323,13 +321,18 @@ class ApplicationRecord < ActiveRecord::Base
         @api_attributes
       end
 
-      def only_includes(params)
-        if params[:only]
+      def index_includes(params)
+        #binding.pry
+        if params[:only] && ["json", "xml"].include?(params[:format])
           includes_hash = SerializableParameters.includes_hash(params[:only], self.name)
         else
-          includes_hash = {}
+          includes_hash = default_includes
         end
         includes(includes_hash)
+      end
+
+      def default_includes
+        {}
       end
 
       def available_includes
@@ -375,6 +378,7 @@ class ApplicationRecord < ActiveRecord::Base
     end
 
     def serializable_hash(options = {})
+      #binding.pry
       options ||= {}
       if options[:only] && options[:only].is_a?(String)
         options.merge!(SerializableParameters.process_only(options[:only], self.class.name))
@@ -460,7 +464,7 @@ class ApplicationRecord < ActiveRecord::Base
   end
 
   concerning :DtextMethods do
-    def dtext_shortlink(**options)
+    def dtext_shortlink
       "#{self.class.name.underscore.tr("_", " ")} ##{id}"
     end
   end

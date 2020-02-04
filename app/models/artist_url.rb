@@ -127,7 +127,7 @@ class ArtistUrl < ApplicationRecord
     errors[:url] << "'#{uri}' is malformed: #{error}"
   end
 
-  def permitted_includes
-    [:artist]
+  def self.default_includes
+    {artist: [{urls: []}]}
   end
 end
