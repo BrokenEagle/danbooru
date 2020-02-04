@@ -31,10 +31,7 @@ class ArtistsController < ApplicationController
     # XXX
     params[:search][:name] = params.delete(:name) if params[:name]
 
-    @artists = Artist.includes(:urls).paginated_search(params)
-    @artists = @artists.includes(:tag) if request.format.html?
-    @artists = @artists.includes(:urls) if !request.format.html?
-
+    @artists = Artist.paginated_search(params)
     respond_with(@artists)
   end
 

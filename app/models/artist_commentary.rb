@@ -144,4 +144,12 @@ class ArtistCommentary < ApplicationRecord
 
   extend SearchMethods
   include VersionMethods
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      {}
+    else
+      {post: [{uploader: []}]}
+    end
+  end
 end

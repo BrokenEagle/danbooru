@@ -7,9 +7,9 @@ class ApplicationRecord < ActiveRecord::Base
         extending(PaginationExtension).paginate(*options)
       end
 
-      def paginated_search(params, count_pages: params[:search].present?)
+      def paginated_search(params, defaults: {}, count_pages: params[:search].present?)
         search_params = params.fetch(:search, {}).permit!
-        search(search_params).paginate(params[:page], limit: params[:limit], search_count: count_pages)
+        search(search_params).paginate(params[:page], limit: params[:limit], search_count: count_pages).index_includes(params)
       end
     end
   end
@@ -322,21 +322,26 @@ class ApplicationRecord < ActiveRecord::Base
       end
 
       def index_includes(params)
-        #binding.pry
-        if params[:only] && ["json", "xml"].include?(params[:format])
+        if params[:action] != "index"
+          includes_hash = {}
+        elsif params[:only] && ["json", "xml"].include?(params[:format])
           includes_hash = SerializableParameters.includes_hash(params[:only], self.name)
         else
-          includes_hash = default_includes
+          includes_hash = default_includes(params)
         end
         includes(includes_hash)
       end
 
-      def default_includes
+      def default_includes(*)
         {}
       end
 
       def available_includes
-        reflections.keys.map(&:to_sym)
+        reflections.keys.map(&:to_sym) - forbidden_includes
+      end
+
+      def forbidden_includes
+        []
       end
 
       def associated_models(name)

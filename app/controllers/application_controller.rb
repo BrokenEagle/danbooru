@@ -25,17 +25,11 @@ class ApplicationController < ActionController::Base
   private
 
   def respond_with(subject, *options, &block)
-    #binding.pry
     @current_item = subject
 
     if params[:action] == "index" && is_redirect?(subject)
       redirect_to_show(subject)
     else
-      add_includes = !options[0] || !options[0].key?(:includes) || options[0][:includes]
-      if params[:action] == "index" && add_includes
-        subject = subject.index_includes(params)
-      end
-      #binding.pry
       super
     end
   end

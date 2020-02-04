@@ -754,4 +754,8 @@ class User < ApplicationRecord
   def dtext_shortlink(**options)
     "<@#{name}>"
   end
+
+  def self.forbidden_includes
+    self.reflections.keys.map(&:to_sym) - [:inviter]
+  end
 end

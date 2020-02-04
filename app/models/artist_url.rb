@@ -127,7 +127,11 @@ class ArtistUrl < ApplicationRecord
     errors[:url] << "'#{uri}' is malformed: #{error}"
   end
 
-  def self.default_includes
-    {artist: [{urls: []}]}
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      {artist: [{urls: []}]}
+    else
+      {artist: []}
+    end
   end
 end
