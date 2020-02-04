@@ -147,9 +147,9 @@ class ArtistCommentary < ApplicationRecord
 
   def self.default_includes(params)
     if ["json", "xml"].include?(params[:format])
-      {}
+      []
     else
-      {post: [{uploader: []}]}
+      [{post: [:uploader]}]
     end
   end
 end

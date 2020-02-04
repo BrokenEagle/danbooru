@@ -540,9 +540,9 @@ class Artist < ApplicationRecord
 
   def self.default_includes(params)
     if ["json", "xml"].include?(params[:format])
-      {urls: []}
+      [:urls]
     else
-      {urls: [], tag: []}
+      [:urls, :tag]
     end
   end
 end

@@ -325,7 +325,7 @@ class ApplicationRecord < ActiveRecord::Base
         if params[:action] != "index"
           includes_hash = {}
         elsif params[:only] && ["json", "xml"].include?(params[:format])
-          includes_hash = SerializableParameters.includes_hash(params[:only], self.name)
+          includes_hash = SerializableParameters.includes_parameters(params[:only], self.name)
         else
           includes_hash = default_includes(params)
         end
@@ -383,10 +383,11 @@ class ApplicationRecord < ActiveRecord::Base
     end
 
     def serializable_hash(options = {})
-      #binding.pry
       options ||= {}
       if options[:only] && options[:only].is_a?(String)
-        options.merge!(SerializableParameters.process_only(options[:only], self.class.name))
+        options.delete(:methods)
+        options.delete(:include)
+        options.merge!(SerializableParameters.serial_parameters(options[:only], self))
       else
         options[:methods] ||= []
         attributes, methods = api_attributes.partition { |attr| has_attribute?(attr) }
@@ -403,7 +404,7 @@ class ApplicationRecord < ActiveRecord::Base
       end
 
       hash = super(options)
-      hash.transform_keys { |key| key.delete("?") }
+      hash.transform_keys! { |key| key.delete("?") }
       hash
     end
   end
