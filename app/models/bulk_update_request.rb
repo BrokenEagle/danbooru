@@ -216,4 +216,12 @@ class BulkUpdateRequest < ApplicationRecord
       forum_topic_id
     )
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:user, :approver, :forum_topic, {forum_post: [:votes]}]
+    end
+  end
 end

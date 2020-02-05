@@ -49,4 +49,12 @@ class IpAddress < ApplicationRecord
   def html_data_attributes
     super & attributes.keys.map(&:to_sym)
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:user, :model]
+    end
+  end
 end

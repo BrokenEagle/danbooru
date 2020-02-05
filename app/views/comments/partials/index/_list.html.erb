@@ -3,24 +3,24 @@
     <%= render "comments/partials/index/header", :post => post %>
   <% end %>
 
-  <% if post.moderation_reports.visible.recent.present? %>
+  <% if ModerationReport.filter(post.moderation_reports, :visiblef, :recentf).present? %>
     <div class="row moderation-comments-notice">
       <span class="info" id="moderation-comments-notice-for-<%= post.id %>">
-        This post has comments reported for moderation! (<%= pluralize(post.moderation_reports.visible.recent.length, "report") %>)
+        This post has comments reported for moderation! (<%= pluralize(ModerationReport.filter(post.moderation_reports, :visiblef, :recentf).length, "report") %>)
       </span>
     </div>
   <% end %>
-  <% if post.comments.hidden(CurrentUser.user).any? || (page == :comments && post.comments.size > 6) %>
+  <% if Comment.hidden(post.comments, CurrentUser.user).any? || (page == :comments && post.comments.size > 6) %>
     <div class="row hidden-comments-notice">
       <span class="info" id="threshold-comments-notice-for-<%= post.id %>">
-        <%= link_to "Show #{pluralize post.comments.hidden(CurrentUser.user).size, "hidden comment"}", comments_path(post_id: post.id), id: "show-all-comments-link", remote: true %>
+        <%= link_to "Show #{pluralize Comment.hidden(post.comments, CurrentUser.user).size, "hidden comment"}", comments_path(post_id: post.id), id: "show-all-comments-link", remote: true %>
       </span>
     </div>
   <% end %>
 
   <div class="list-of-comments list-of-messages">
     <% if comments.present? %>
-      <%= render partial: "comments/partials/show/comment", collection: comments, locals: { context: :index_by_post, dtext_data: DText.preprocess(comments.map(&:body)), moderation_reports: post.moderation_reports.visible.recent } %>
+      <%= render partial: "comments/partials/show/comment", collection: comments, locals: { context: :index_by_post, dtext_data: DText.preprocess(comments.map(&:body)), moderation_reports: ModerationReport.filter(post.moderation_reports, :visiblef, :recentf) } %>
     <% elsif post.last_commented_at.present? %>
       <p>There are no visible comments.</p>
     <% else %>

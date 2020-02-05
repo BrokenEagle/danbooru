@@ -1787,4 +1787,16 @@ class Post < ApplicationRecord
 
     save
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      comment_includes = [:creator, :post]
+      comment_includes << :votes if CurrentUser.is_member?
+      includes_array = [:uploader, {comments: comment_includes}]
+      includes_array << :moderation_reports if CurrentUser.is_moderator?
+      includes_array
+    end
+  end
 end

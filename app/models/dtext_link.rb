@@ -76,7 +76,11 @@ class DtextLink < ApplicationRecord
     self.link_target = self.link_target.truncate(2048, omission: "")
   end
 
-  def permitted_includes
-    [:model]
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:model]
+    end
   end
 end

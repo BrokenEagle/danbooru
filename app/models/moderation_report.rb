@@ -13,6 +13,7 @@ class ModerationReport < ApplicationRecord
   scope :dmail, -> { where(model_type: "Dmail") }
   scope :comment, -> { where(model_type: "Comment") }
   scope :forum_post, -> { where(model_type: "ForumPost") }
+  ### DISABLE RECENT AFTER FINISHED ###
   scope :recent, -> { where("moderation_reports.created_at >= ?", 1.week.ago) }
 
   def self.enabled?
@@ -86,5 +87,26 @@ class ModerationReport < ApplicationRecord
     q = q.search_attributes(params, :model_type, :model_id, :creator_id)
 
     q.apply_default_order(params)
+  end
+
+  #def self.recent(reports,i)
+  #  puts i
+  #  reports.reject { |report| report.created_at <= 1.week.ago }
+  #/end
+
+  def self.filter(reports, *types)
+    ret = reports
+    types.each do |type|
+      ret = self.send(type, ret)
+    end
+    ret
+  end
+
+  def self.visiblef(reports, user = CurrentUser.user)
+    (CurrentUser.user.is_moderator? ? reports : [])
+  end
+
+  def self.recentf(reports)
+    reports.reject { |report| report.created_at <= 1.week.ago }
   end
 end

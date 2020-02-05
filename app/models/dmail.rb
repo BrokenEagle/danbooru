@@ -195,4 +195,12 @@ class Dmail < ApplicationRecord
   def dtext_shortlink(key: false, **options)
     key ? "dmail ##{id}/#{self.key}" : "dmail ##{id}"
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:owner, :to, :from]
+    end
+  end
 end

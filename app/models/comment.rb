@@ -147,12 +147,12 @@ class Comment < ApplicationRecord
     return :visible
   end
 
-  def self.hidden(user)
-    select { |comment| comment.visibility(user) == :hidden }
+  def self.hidden(comments, user)
+    comments.reject { |comment| comment.visibility(user) != :hidden }
   end
 
-  def self.visible(user)
-    select { |comment| comment.visibility(user) == :visible }
+  def self.visible(comments, user)
+    comments.reject { |comment| comment.visibility(user) != :visible }
   end
 
   def creator_name
@@ -173,5 +173,15 @@ class Comment < ApplicationRecord
 
   def quoted_response
     DText.quote(body, creator.name)
+  end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      [:creator, :updater]
+    else
+      includes_array = [:creator, :updater, {post: [:uploader]}]
+      includes_array << :votes if CurrentUser.is_member?
+      includes_array
+    end
   end
 end

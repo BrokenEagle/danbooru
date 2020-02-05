@@ -12,7 +12,7 @@ class ArtistCommentaryVersion < ApplicationRecord
     if ["json", "xml"].include?(params[:format])
       {}
     else
-      {post: [{uploader: []}], updater: []}
+      [{post: [:uploader]}, :updater]
     end
   end
 end

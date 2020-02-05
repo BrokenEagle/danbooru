@@ -168,4 +168,12 @@ class FavoriteGroup < ApplicationRecord
   def viewable_by?(user)
     creator_id == user.id || is_public
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:creator]
+    end
+  end
 end

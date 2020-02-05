@@ -29,9 +29,9 @@ class ArtistVersion < ApplicationRecord
 
   def self.default_includes(params)
     if ["json", "xml"].include?(params[:format])
-      {}
+      []
     else
-      {updater: [], artist: [{urls: []}]}
+      [:updater, {artist: [:urls]}]
     end
   end
 end

@@ -178,7 +178,13 @@ class ForumTopic < ApplicationRecord
     original_post&.update_columns(:updater_id => updater.id, :updated_at => Time.now)
   end
 
-  def permitted_includes
-    [:posts]
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    elsif params[:format] == "atom"
+      [:creator, :original_post]
+    else
+      [:creator, :updater, :forum_topic_visit_by_current_user]
+    end
   end
 end

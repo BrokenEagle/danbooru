@@ -323,17 +323,17 @@ class ApplicationRecord < ActiveRecord::Base
 
       def index_includes(params)
         if params[:action] != "index"
-          includes_hash = {}
+          includes_array = []
         elsif params[:only] && ["json", "xml"].include?(params[:format])
-          includes_hash = SerializableParameters.includes_parameters(params[:only], self.name)
+          includes_array = SerializableParameters.includes_parameters(params[:only], self.name)
         else
-          includes_hash = default_includes(params)
+          includes_array = default_includes(params)
         end
-        includes(includes_hash)
+        includes(includes_array).load
       end
 
       def default_includes(*)
-        {}
+        []
       end
 
       def available_includes
@@ -404,8 +404,7 @@ class ApplicationRecord < ActiveRecord::Base
       end
 
       hash = super(options)
-      hash.transform_keys! { |key| key.delete("?") }
-      hash
+      hash.transform_keys { |key| key.delete("?") }
     end
   end
 

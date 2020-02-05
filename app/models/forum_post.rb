@@ -224,7 +224,11 @@ class ForumPost < ApplicationRecord
     "forum ##{id}"
   end
 
-  def permitted_includes
-    [:dtext_links, :topic]
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:topic, :creator]
+    end
   end
 end

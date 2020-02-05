@@ -51,4 +51,12 @@ class CommentVote < ApplicationRecord
   def initialize_user
     self.user_id = CurrentUser.user.id
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:user, {comment: [:creator, {post: [:uploader]}]}]
+    end
+  end
 end
