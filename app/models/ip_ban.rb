@@ -42,4 +42,12 @@ class IpBan < ApplicationRecord
     str += "/" + ip_addr.prefix.to_s if has_subnet?
     str
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:creator]
+    end
+  end
 end

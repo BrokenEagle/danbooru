@@ -109,4 +109,12 @@ class ModerationReport < ApplicationRecord
   def self.recentf(reports)
     reports.reject { |report| report.created_at <= 1.week.ago }
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:creator, :model]
+    end
+  end
 end

@@ -12,7 +12,22 @@ class NoteVersion < ApplicationRecord
     q.apply_default_order(params)
   end
 
+  def prev_cache
+    @prev_cache ||= begin
+      ver = NoteVersion.where("note_id = ? and updated_at < ?", note_id, updated_at).order("updated_at desc").first
+      (ver ? [ver] : [])
+    end
+  end
+
   def previous
-    NoteVersion.where("note_id = ? and updated_at < ?", note_id, updated_at).order("updated_at desc").first
+    prev_cache.first
+  end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:updater]
+    end
   end
 end

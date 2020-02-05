@@ -107,11 +107,26 @@ class PoolArchive < ApplicationRecord
     diff
   end
 
+  def prev_cache
+    @prev_cache ||= begin
+      ver = PoolArchive.where("pool_id = ? and version < ?", pool_id, version).order("version desc").first
+      (ver ? [ver] : [])
+    end
+  end
+
   def previous
-    PoolArchive.where("pool_id = ? and version < ?", pool_id, version).order("version desc").first
+    prev_cache.first
   end
 
   def pretty_name
     name.tr("_", " ")
+  end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:updater, :pool]
+    end
   end
 end
