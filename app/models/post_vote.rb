@@ -68,4 +68,12 @@ class PostVote < ApplicationRecord
       1
     end
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:user, {post: [:uploader]}]
+    end
+  end
 end

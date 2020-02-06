@@ -8,9 +8,7 @@ class IpAddressesController < ApplicationController
     if search_params[:group_by] == "ip_addr"
       @ip_addresses = @ip_addresses.group_by_ip_addr(search_params[:ipv4_masklen], search_params[:ipv6_masklen])
     elsif search_params[:group_by] == "user"
-      @ip_addresses = @ip_addresses.group_by_user.includes(:user)
-    else
-      @ip_addresses = @ip_addresses.includes(:user, :model)
+      @ip_addresses = @ip_addresses.group_by_user
     end
 
     respond_with(@ip_addresses)

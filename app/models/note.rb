@@ -158,4 +158,16 @@ class Note < ApplicationRecord
       end
     end
   end
+
+  def self.forbidden_includes
+    [:versions]
+  end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      [:creator]
+    else
+      [:creator, :post]
+    end
+  end
 end

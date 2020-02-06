@@ -250,4 +250,8 @@ class WikiPage < ApplicationRecord
       title
     end
   end
+
+  def self.forbidden_includes
+    [:versions]
+  end
 end

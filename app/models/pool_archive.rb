@@ -114,4 +114,12 @@ class PoolArchive < ApplicationRecord
   def pretty_name
     name.tr("_", " ")
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:updater, :pool]
+    end
+  end
 end

@@ -15,4 +15,12 @@ class NoteVersion < ApplicationRecord
   def previous
     NoteVersion.where("note_id = ? and updated_at < ?", note_id, updated_at).order("updated_at desc").first
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:updater]
+    end
+  end
 end

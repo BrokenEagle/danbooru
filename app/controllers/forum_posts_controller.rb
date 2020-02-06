@@ -24,7 +24,7 @@ class ForumPostsController < ApplicationController
   end
 
   def index
-    @forum_posts = ForumPost.paginated_search(params).includes(:topic)
+    @forum_posts = ForumPost.paginated_search(params)
     respond_with(@forum_posts)
   end
 

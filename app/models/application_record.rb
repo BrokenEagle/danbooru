@@ -11,7 +11,7 @@ class ApplicationRecord < ActiveRecord::Base
         search_params = params.fetch(:search, {}).permit!
         search_params = defaults.merge(search_params).with_indifferent_access
 
-        search(search_params).paginate(params[:page], limit: params[:limit], search_count: count_pages)
+        search(search_params).paginate(params[:page], limit: params[:limit], search_count: count_pages).index_includes(params)
       end
     end
   end
@@ -322,6 +322,43 @@ class ApplicationRecord < ActiveRecord::Base
         @api_attributes += including
         @api_attributes
       end
+
+      def index_includes(params)
+        if params[:action] != "index"
+          includes_array = []
+        elsif params[:only] && ["json", "xml"].include?(params[:format])
+          includes_array = ParameterBuilder.includes_parameters(params[:only], self.name)
+        else
+          includes_array = default_includes(params)
+        end
+        includes(includes_array).load
+      end
+
+      def default_includes(*)
+        []
+      end
+
+      def available_includes
+        reflections.keys.map(&:to_sym) - forbidden_includes
+      end
+
+      def forbidden_includes
+        []
+      end
+
+      def associated_models(name)
+        if reflections[name].options[:polymorphic]
+          associated_models = reflections[name].active_record.try(:model_types) || []
+        elsif reflections[name].options[:class_name]
+          associated_models = [reflections[name].options[:class_name]]
+        else
+          associated_models = [reflections[name].name.to_s.singularize.camelize]
+        end
+      end
+    end
+
+    def available_includes
+      self.class.available_includes
     end
 
     def api_attributes
@@ -338,25 +375,24 @@ class ApplicationRecord < ActiveRecord::Base
 
     def serializable_hash(options = {})
       options ||= {}
-      options[:only] ||= []
-      options[:include] ||= []
-      options[:methods] ||= []
+      if options[:only] && options[:only].is_a?(String)
+        options.delete(:methods)
+        options.delete(:include)
+        options.merge!(ParameterBuilder.serial_parameters(options[:only], self))
+      else
+        options[:methods] ||= []
+        attributes, methods = api_attributes.partition { |attr| has_attribute?(attr) }
+        methods += options[:methods]
+        options[:only] ||= attributes + methods
 
-      options[:only] = options[:only].map(&:to_sym)
-
-      attributes, methods = api_attributes.partition { |attr| has_attribute?(attr) }
-      methods += options[:methods]
-      includes = options[:include]
-
-      if options[:only].present?
         attributes &= options[:only]
         methods &= options[:only]
-        includes &= options[:only]
-      end
 
-      options[:only] = attributes
-      options[:methods] = methods
-      options[:include] = includes
+        options[:only] = attributes
+        options[:methods] = methods
+
+        options.delete(:methods) if options[:methods].empty?
+      end
 
       hash = super(options)
       hash.transform_keys { |key| key.delete("?") }

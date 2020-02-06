@@ -12,7 +12,7 @@ module Moderator
       end
 
       def index
-        @post_disapprovals = PostDisapproval.includes(:user).paginated_search(params)
+        @post_disapprovals = PostDisapproval.paginated_search(params)
         respond_with(@post_disapprovals)
       end
 

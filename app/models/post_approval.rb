@@ -40,4 +40,12 @@ class PostApproval < ApplicationRecord
     q = q.search_attributes(params, :user, :post)
     q.apply_default_order(params)
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:user, {post: [:uploader]}]
+    end
+  end
 end

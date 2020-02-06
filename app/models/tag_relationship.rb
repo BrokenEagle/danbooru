@@ -221,4 +221,12 @@ class TagRelationship < ApplicationRecord
 
   extend SearchMethods
   include MessageMethods
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:antecedent_tag, :consequent_tag, :approver]
+    end
+  end
 end

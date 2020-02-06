@@ -83,4 +83,12 @@ class ModAction < ApplicationRecord
   def initialize_creator
     self.creator_id = CurrentUser.id
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:creator]
+    end
+  end
 end

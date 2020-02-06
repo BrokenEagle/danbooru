@@ -174,4 +174,22 @@ class Comment < ApplicationRecord
   def quoted_response
     DText.quote(body, creator.name)
   end
+
+  def self.forbidden_includes
+    forbidden = [:votes]
+    forbidden << :moderation_reports if !CurrentUser.user.is_moderator?
+    forbidden
+  end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      [:creator, :updater]
+    elsif params[:format] == "atom"
+      [:creator, :post]
+    else
+      includes_array = [:creator, :updater, {post: [:uploader]}]
+      includes_array << :votes if CurrentUser.is_member?
+      includes_array
+    end
+  end
 end

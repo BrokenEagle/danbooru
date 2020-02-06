@@ -6,7 +6,7 @@ class PostVersionsController < ApplicationController
   respond_to :js, only: [:undo]
 
   def index
-    @post_versions = PostArchive.includes(:updater, post: [:versions]).paginated_search(params)
+    @post_versions = PostArchive.paginated_search(params)
     respond_with(@post_versions)
   end
 

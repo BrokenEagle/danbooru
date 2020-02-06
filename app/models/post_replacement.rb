@@ -33,4 +33,12 @@ class PostReplacement < ApplicationRecord
     tags = tags.map { |tag| "-#{tag}" }
     tags.join(" ")
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:creator, {post: [:uploader]}]
+    end
+  end
 end

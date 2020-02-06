@@ -247,4 +247,12 @@ class Upload < ApplicationRecord
   def upload_as_pending?
     as_pending.to_s.truthy?
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      [:uploader]
+    else
+      [:uploader, {post: [:uploader]}]
+    end
+  end
 end

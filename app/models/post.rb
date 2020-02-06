@@ -1787,4 +1787,19 @@ class Post < ApplicationRecord
 
     save
   end
+
+  def self.forbidden_includes
+    forbidden = [:favorites, :votes, :versions, :pixiv_ugoira_frame_data]
+    forbidden += [:moderation_reports] if !CurrentUser.user.is_moderator?
+    forbidden += [:disapprovals] if !CurrentUser.user.is_approver?
+    forbidden
+  end
+
+  def self.default_includes(params)
+    if ["json", "xml", "atom"].include?(params[:format])
+      [:uploader]
+    else
+      (CurrentUser.user.is_moderator? ? [:uploader] : [])
+    end
+  end
 end

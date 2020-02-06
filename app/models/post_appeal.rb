@@ -62,4 +62,12 @@ class PostAppeal < ApplicationRecord
   def appeal_count_for_creator
     creator.post_appeals.recent.count
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      [:post]
+    else
+      [:creator, {post: [:appeals, :uploader, :approver]}]
+    end
+  end
 end

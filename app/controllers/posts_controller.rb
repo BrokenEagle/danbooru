@@ -11,6 +11,7 @@ class PostsController < ApplicationController
       end
     else
       @post_set = PostSets::Post.new(tag_query, params[:page], params[:limit], raw: params[:raw], random: params[:random], format: params[:format])
+      @post_set.posts = @post_set.posts.index_includes(params) if !@post_set.is_random?
       @posts = @post_set.posts
       respond_with(@posts) do |format|
         format.atom

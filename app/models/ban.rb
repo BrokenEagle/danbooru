@@ -115,4 +115,12 @@ class Ban < ApplicationRecord
   def create_unban_mod_action
     ModAction.log(%{Unbanned <@#{user_name}>}, :user_unban)
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:user, :banner]
+    end
+  end
 end

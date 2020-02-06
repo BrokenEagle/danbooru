@@ -67,4 +67,12 @@ class PostDisapproval < ApplicationRecord
       end
     end
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:user]
+    end
+  end
 end

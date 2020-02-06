@@ -29,4 +29,12 @@ class WikiPageVersion < ApplicationRecord
   def category_name
     Tag.category_for(title)
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:updater]
+    end
+  end
 end

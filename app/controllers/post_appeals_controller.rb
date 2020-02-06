@@ -8,7 +8,7 @@ class PostAppealsController < ApplicationController
   end
 
   def index
-    @post_appeals = PostAppeal.includes(:creator).paginated_search(params).includes(post: [:appeals, :uploader, :approver])
+    @post_appeals = PostAppeal.paginated_search(params)
     respond_with(@post_appeals)
   end
 
