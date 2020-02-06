@@ -145,6 +145,10 @@ class ArtistCommentary < ApplicationRecord
   extend SearchMethods
   include VersionMethods
 
+  def self.forbidden_includes
+    [:versions]
+  end
+
   def self.default_includes(params)
     if ["json", "xml"].include?(params[:format])
       []

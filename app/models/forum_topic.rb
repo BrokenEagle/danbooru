@@ -179,7 +179,7 @@ class ForumTopic < ApplicationRecord
   end
 
   def self.forbidden_includes
-    forbidden = [:forum_topic_visits, :forum_topic_visit_by_current_user]
+    forbidden = [:posts, :forum_topic_visits, :forum_topic_visit_by_current_user]
     forbidden += [:moderation_reports] if !CurrentUser.user.is_moderator?
     forbidden
   end

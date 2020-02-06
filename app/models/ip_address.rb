@@ -54,7 +54,13 @@ class IpAddress < ApplicationRecord
     if ["json", "xml"].include?(params[:format])
       []
     else
-      [:user, :model]
+      if params[:search][:group_by] == "user"
+        [:user]
+      elsif params[:search][:group_by] == "ip_addr"
+        []
+      else
+        [:user, :model]
+      end
     end
   end
 end

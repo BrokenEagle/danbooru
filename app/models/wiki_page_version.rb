@@ -30,7 +30,11 @@ class WikiPageVersion < ApplicationRecord
     Tag.category_for(title)
   end
 
-  def permitted_includes
-    [:wiki_page]
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:updater]
+    end
   end
 end

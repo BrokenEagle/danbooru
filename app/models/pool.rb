@@ -313,6 +313,10 @@ class Pool < ApplicationRecord
     end
   end
 
+  def self.forbidden_includes
+    [:versions]
+  end
+
   def self.default_includes(params)
     [:creator]
   end
