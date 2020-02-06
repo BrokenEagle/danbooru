@@ -262,5 +262,13 @@ class PostArchive < ApplicationRecord
     super + [:obsolete_added_tags, :obsolete_removed_tags, :unchanged_tags, :updater_name]
   end
 
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      [:updater, {post: [:versions]}]
+    else
+      [:updater, {post: [:uploader, :versions]}]
+    end
+  end
+
   memoize :previous, :tag_array, :changes, :added_tags_with_fields, :removed_tags_with_fields, :obsolete_removed_tags, :obsolete_added_tags, :unchanged_tags
 end

@@ -224,6 +224,10 @@ class ForumPost < ApplicationRecord
     "forum ##{id}"
   end
 
+  def self.forbidden_includes
+    (CurrentUser.user.is_moderator? ? [] : [:moderation_reports])
+  end
+
   def self.default_includes(params)
     if ["json", "xml"].include?(params[:format])
       []

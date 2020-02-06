@@ -155,10 +155,22 @@ class PostFlag < ApplicationRecord
   end
 
   def uploader_id
-    @uploader_id ||= Post.find(post_id).uploader_id
+    post.uploader_id
   end
 
   def not_uploaded_by?(userid)
     uploader_id != userid
+  end
+
+  def self.forbidden_includes
+    (CurrentUser.user.is_moderator? ? [] : [:creator])
+  end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:creator, {post: [:flags, :uploader, :approver]}]
+    end
   end
 end

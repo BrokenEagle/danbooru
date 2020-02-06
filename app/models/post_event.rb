@@ -7,7 +7,8 @@ class PostEvent
   delegate :created_at, to: :event
 
   def self.find_for_post(post_id)
-    post = Post.find(post_id)
+    post = Post.where(id: post_id).includes({appeals: [:creator]}, {approvals: [:user]})
+    post = (CurrentUser.is_moderator? ? post.includes({flags: [:creator]}) : post.includes([:flags])).first
     (post.appeals + post.flags + post.approvals).sort_by(&:created_at).reverse.map { |e| new(event: e) }
   end
 

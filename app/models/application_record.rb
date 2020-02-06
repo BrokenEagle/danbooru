@@ -9,7 +9,7 @@ class ApplicationRecord < ActiveRecord::Base
 
       def paginated_search(params, defaults: {}, count_pages: params[:search].present?)
         search_params = params.fetch(:search, {}).permit!
-        search(search_params).paginate(params[:page], limit: params[:limit], search_count: count_pages).index_includes(params)
+        search(search_params).paginate(params[:page], limit: params[:limit], search_count: count_pages).index_includes(params).load
       end
     end
   end
@@ -377,9 +377,7 @@ class ApplicationRecord < ActiveRecord::Base
     end
 
     def available_includes
-      @available_includes ||= methods.grep(/^autosave_associated_records_for_\w+$/).map do |sym|
-        sym.to_s.match(/^autosave_associated_records_for_(\w+)$/)[1].to_sym
-      end
+      self.class.available_includes
     end
 
     def serializable_hash(options = {})

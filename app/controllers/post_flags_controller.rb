@@ -8,7 +8,7 @@ class PostFlagsController < ApplicationController
   end
 
   def index
-    @post_flags = PostFlag.paginated_search(params).includes(:creator, post: [:flags, :uploader, :approver])
+    @post_flags = PostFlag.paginated_search(params)
     respond_with(@post_flags)
   end
 

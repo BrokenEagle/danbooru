@@ -178,6 +178,12 @@ class ForumTopic < ApplicationRecord
     original_post&.update_columns(:updater_id => updater.id, :updated_at => Time.now)
   end
 
+  def self.forbidden_includes
+    forbidden = [:forum_topic_visits, :forum_topic_visit_by_current_user]
+    forbidden += [:moderation_reports] if !CurrentUser.user.is_moderator?
+    forbidden
+  end
+
   def self.default_includes(params)
     if ["json", "xml"].include?(params[:format])
       []

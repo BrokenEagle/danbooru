@@ -85,4 +85,12 @@ class UserFeedback < ApplicationRecord
   def editable_by?(editor)
     (editor.is_moderator? && editor != user) || (creator == editor && !is_deleted?)
   end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:user, :creator]
+    end
+  end
 end

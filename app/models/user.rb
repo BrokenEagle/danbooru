@@ -756,6 +756,16 @@ class User < ApplicationRecord
   end
 
   def self.forbidden_includes
-    self.reflections.keys.map(&:to_sym) - [:inviter]
+    forbidden = self.reflections.keys.map(&:to_sym) - [:inviter]
+    forbidden -= [:moderation_reports] if CurrentUser.user.is_moderator?
+    forbidden
+  end
+
+  def self.default_includes(params)
+    if ["json", "xml"].include?(params[:format])
+      []
+    else
+      [:inviter]
+    end
   end
 end

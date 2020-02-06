@@ -1788,15 +1788,30 @@ class Post < ApplicationRecord
     save
   end
 
+  def self.forbidden_includes
+    forbidden = [:favorites, :votes]
+    forbidden += [:moderation_reports] if !CurrentUser.user.is_moderator?
+    forbidden += [:disapprovals] if !CurrentUser.user.is_approver?
+    forbidden
+  end
+
   def self.default_includes(params)
     if ["json", "xml"].include?(params[:format])
-      []
+      if params[:controller] == "comments"
+        []
+      elsif ["posts", "legacy"].include?(params[:controller])
+        [:uploader]
+      end
     else
-      comment_includes = [:creator, :post]
-      comment_includes << :votes if CurrentUser.is_member?
-      includes_array = [:uploader, {comments: comment_includes}]
-      includes_array << :moderation_reports if CurrentUser.is_moderator?
-      includes_array
+      if params[:controller] == "comments"
+        comment_includes = [:creator, :post]
+        comment_includes << :votes if CurrentUser.is_member?
+        includes_array = [:uploader, {comments: comment_includes}]
+        includes_array << :moderation_reports if CurrentUser.is_moderator?
+        includes_array
+      elsif ["posts", "legacy"].include?(params[:controller])
+        (CurrentUser.user.is_moderator? ? [:uploader] : [])
+      end
     end
   end
 end

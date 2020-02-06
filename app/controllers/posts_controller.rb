@@ -11,6 +11,7 @@ class PostsController < ApplicationController
       end
     else
       @post_set = PostSets::Post.new(tag_query, params[:page], params[:limit], raw: params[:raw], random: params[:random], format: params[:format])
+      @post_set.posts = @post_set.posts.index_includes(params) if !@post_set.is_random?
       @posts = @post_set.posts
       respond_with(@posts) do |format|
         format.atom
@@ -24,7 +25,7 @@ class PostsController < ApplicationController
     @comments = @post.comments
     @comments = @comments.includes(:creator)
     @comments = @comments.includes(:votes) if CurrentUser.is_member?
-    @comments = @comments.visible(CurrentUser.user)
+    @comments = Comment.visible(@comments, CurrentUser.user)
 
     include_deleted = @post.is_deleted? || (@post.parent_id.present? && @post.parent.is_deleted?) || CurrentUser.user.show_deleted_children?
     @sibling_posts = @post.parent.present? ? @post.parent.children : Post.none
