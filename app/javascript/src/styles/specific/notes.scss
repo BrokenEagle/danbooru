@@ -15,8 +15,8 @@ div#note-container {
     overflow: hidden;
   }
 
-  div.note-body, div.note-box.embedded div.note-box-inner-border {
-    h1, h2, h3, h4, h5, h6, a, span, div, blockquote, br, p, ul, li, ol, em, strong, small, big, b, i, font, u, s, code, center {
+  div.note-body, div.note-box.embedded div.note-box-border {
+    h1, h2, h3, h4, h5, h6, a, span, div, blockquote, p, ul, li, ol, em, strong, small, big, b, i, font, u, s, code, center {
       line-height: 1.25;
     }
 
