@@ -1,4 +1,8 @@
 body.a-index {
+  ul#version-type-list, ul#version-type-list li {
+    display: inline;
+  }
+
   div#p-revert-listing {
     display: flex;
 

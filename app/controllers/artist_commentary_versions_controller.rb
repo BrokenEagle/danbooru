@@ -2,8 +2,10 @@ class ArtistCommentaryVersionsController < ApplicationController
   respond_to :html, :xml, :json
 
   def index
+    set_version_comparison
     @commentary_versions = ArtistCommentaryVersion.paginated_search(params)
     @commentary_versions = @commentary_versions.includes(:updater, post: :uploader) if request.format.html?
+    @commentary_versions = @commentary_versions.includes(post: :artist_commentary) if request.format.html? && params[:type] == "current"
 
     respond_with(@commentary_versions)
   end
