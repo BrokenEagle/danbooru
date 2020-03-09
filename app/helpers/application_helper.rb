@@ -42,10 +42,23 @@ module ApplicationHelper
   end
 
   def version_type_links(params)
-    url = '/' + params[:controller] + "?" + params[:search].to_h.map { |k,v| "search[#{k}]=#{v}" }.join("&")
-    if params[:search]
-      url
+    html = []
+    %w(previous subsequent altered current).each do |type|
+      if type == params[:type]
+        html << %(<span style="font-weight:bold">#{type}</span>)
+      else
+        html << tag.li(link_to(type, params.except(:controller, :action).merge(type: type).permit!))
+      end
     end
+    html.join(" | ").html_safe
+  end
+
+  def version_type_links_old(params)
+    #binding.pry
+    url = '/' + params[:controller] + "?"
+    url += 'limit=' + params[:limit] if params[:limit].present?
+    url += 'page=' + params[:page] if params[:page].present?
+    url + params[:search].to_h.map { |k,v| "search[#{k}]=#{v}" }.join("&")
     html = []
     %w(previous subsequent altered current).each do |type|
       if type == params[:type]
