@@ -10,24 +10,26 @@ module ApplicationHelper
     render "diff_list", diff: diff, ul_class: ul_class, li_class: li_class
   end
 
-  def diff_body_html(record, previous, field)
-    return h(record[field]).gsub(/\r?\n/, '<span class="paragraph-mark">¶</span><br>').html_safe if previous.blank?
+  def diff_body_html(record, other, field)
+    return h(record[field]).gsub(/\r?\n/, '<span class="paragraph-mark">¶</span><br>').html_safe if other.blank?
 
     pattern = Regexp.new('(?:<.+?>)|(?:\w+)|(?:[ \t]+)|(?:\r?\n)|(?:.+?)')
-    DiffBuilder.new(record[field], previous[field], pattern).build
+    DiffBuilder.new(record[field], other[field], pattern).build
   end
 
-  def status_diff_html(record)
-    previous = record.previous
+  def status_diff_html(record, type)
+    other = record.send(type)
 
-    return "New" if previous.blank?
+    if other.blank?
+      return type == "previous" ? "New" : ""
+    end
 
     statuses = []
     record.class.status_fields.each do |field, status|
       if record.has_attribute?(field)
-        statuses += [status] if record[field] != previous[field]
+        statuses += [status] if record[field] != other[field]
       else
-        statuses += [status] if record.send(field)
+        statuses += [status] if record.send(field, type)
       end
     end
     statuses.join("<br>").html_safe
@@ -37,6 +39,22 @@ module ApplicationHelper
     lines = string.scan(/.{1,10}/)
     wordbreaked_string = lines.map {|str| h(str)}.join("<wbr>")
     raw(wordbreaked_string)
+  end
+
+  def version_type_links(params)
+    url = '/' + params[:controller] + "?" + params[:search].to_h.map { |k,v| "search[#{k}]=#{v}" }.join("&")
+    if params[:search]
+      url
+    end
+    html = []
+    %w(previous subsequent altered current).each do |type|
+      if type == params[:type]
+        html << %(<span style="font-weight:bold">#{type}</span>)
+      else
+        html << li_link_to(type, url + "&type=" + type)
+      end
+    end
+    html.join(" | ").html_safe
   end
 
   def nav_link_to(text, url, **options)
