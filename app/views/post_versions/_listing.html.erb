@@ -21,7 +21,7 @@
         <%= post_version_diff(post_version) %>
       <% end %>
       <% t.column "Changes" do |post_version| %>
-        <%= status_diff_html(post_version) %>
+        <%# status_diff_html(post_version) %>
       <% end %>
       <% t.column "Updated" do |post_version| %>
         <%= link_to_user post_version.updater %>

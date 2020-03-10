@@ -30,6 +30,21 @@ class ArtistVersion < ApplicationRecord
     @previous.first
   end
 
+  def subsequent
+    @subsequent ||= begin
+      ArtistVersion.where("artist_id = ? and created_at > ?", artist_id, created_at).order("created_at asc").limit(1).to_a
+    end
+    @subsequent.first
+  end
+
+  def altered
+    subsequent.present? && subsequent.updater_id != updater_id ? subsequent : nil
+  end
+
+  def current
+    artist
+  end
+
   def self.status_fields
     {
       name: "Renamed",
@@ -43,28 +58,55 @@ class ArtistVersion < ApplicationRecord
     }
   end
 
-  def other_names_changed
-    ((other_names - previous.other_names) | (previous.other_names - other_names)).length > 0
+  def other_names_changed(type)
+    other = self.send(type)
+    ((other_names - other.other_names) | (other.other_names - other_names)).length > 0
   end
 
-  def urls_changed
-    ((urls - previous.urls) | (previous.urls - urls)).length > 0
+  def urls_changed(type)
+    other = self.send(type)
+    if type == "current"
+      current_urls = other.urls.map(&:to_s)
+      ((urls - current_urls) | (current_urls - urls)).length > 0
+    else
+      ((urls - other.urls) | (other.urls - urls)).length > 0
+    end
   end
 
-  def was_deleted
-    is_deleted && !previous.is_deleted
+  def was_deleted(type)
+    other = self.send(type)
+    if type == "previous"
+      is_deleted && !other.is_deleted
+    else
+      !is_deleted && other.is_deleted
+    end
   end
 
-  def was_undeleted
-    !is_deleted && previous.is_deleted
+  def was_undeleted(type)
+    other = self.send(type)
+    if type == "previous"
+      !is_deleted && other.is_deleted
+    else
+      is_deleted && !other.is_deleted
+    end
   end
 
-  def was_banned
-    is_banned && !previous.is_banned
+  def was_banned(type)
+    other = self.send(type)
+    if type == "previous"
+      is_banned && !other.is_banned
+    else
+      !is_banned && other.is_banned
+    end
   end
 
-  def was_unbanned
-    !is_banned && previous.is_banned
+  def was_unbanned(type)
+    other = self.send(type)
+    if type == "previous"
+      !is_banned && other.is_banned
+    else
+      is_banned && !other.is_banned
+    end
   end
 
   def self.available_includes

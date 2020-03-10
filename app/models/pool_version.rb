@@ -89,28 +89,26 @@ class PoolVersion < ApplicationRecord
     normalize_name(name).mb_chars.downcase
   end
 
-  def build_diff(other = previous)
-    diff = {}
-
-    if other.nil?
-      diff[:added_post_ids] = added_post_ids
-      diff[:removed_post_ids] = removed_post_ids
-      diff[:added_desc] = description
-    else
-      diff[:added_post_ids] = post_ids - other.post_ids
-      diff[:removed_post_ids] = other.post_ids - post_ids
-      diff[:added_desc] = description
-      diff[:removed_desc] = other.description
-    end
-
-    diff
-  end
-
   def previous
     @previous ||= begin
       PoolVersion.where("pool_id = ? and version < ?", pool_id, version).order("version desc").limit(1).to_a
     end
     @previous.first
+  end
+
+  def subsequent
+    @subsequent ||= begin
+      PoolVersion.where("pool_id = ? and version > ?", pool_id, version).order("version asc").limit(1).to_a
+    end
+    @subsequent.first
+  end
+
+  def altered
+    subsequent.present? && subsequent.updater_id != updater_id ? subsequent : nil
+  end
+
+  def current
+    pool
   end
 
   def self.status_fields
@@ -124,24 +122,45 @@ class PoolVersion < ApplicationRecord
     }
   end
 
-  def was_deleted
-    is_deleted && !previous.is_deleted
+  def was_deleted(type)
+    other = self.send(type)
+    if type == "previous"
+      is_deleted && !other.is_deleted
+    else
+      !is_deleted && other.is_deleted
+    end
   end
 
-  def was_undeleted
-    !is_deleted && previous.is_deleted
+  def was_undeleted(type)
+    other = self.send(type)
+    if type == "previous"
+      !is_deleted && other.is_deleted
+    else
+      is_deleted && !other.is_deleted
+    end
   end
 
-  def was_activated
-    is_active && !previous.is_active
+  def was_activated(type)
+    other = self.send(type)
+    if type == "previous"
+      is_active && !other.is_active
+    else
+      !is_active && other.is_active
+    end
   end
 
-  def was_deactivated
-    !is_active && previous.is_active
+  def was_deactivated(type)
+    other = self.send(type)
+    if type == "previous"
+      !is_active && other.is_active
+    else
+      is_active && !other.is_active
+    end
   end
 
-  def text_field_changed
-    previous.present? && (name_changed || description_changed)
+  def text_field_changed(type)
+    other = self.send(type)
+    other.present? && (name != other.name || description != other.description)
   end
 
   def pretty_name

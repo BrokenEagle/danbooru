@@ -5,16 +5,23 @@ module ApplicationHelper
     (fields.reduce(false) { |acc, field| acc || params.dig(:search, field).present? } && (!member_check || CurrentUser.is_member?) ? types[0] : types[1])
   end
 
-  def diff_list_html(new, old, latest, ul_class: ["diff-list"], li_class: [])
-    diff = SetDiff.new(new, old, latest)
+  def diff_list_html(this_list, other_list, ul_class: ["diff-list"], li_class: [])
+    diff = SetDiff.new(this_list, other_list)
     render "diff_list", diff: diff, ul_class: ul_class, li_class: li_class
   end
 
   def diff_body_html(record, other, field)
-    return h(record[field]).gsub(/\r?\n/, '<span class="paragraph-mark">¶</span><br>').html_safe if other.blank?
+    if record.blank? || other.blank?
+      diff_record = (other.blank? ? record : other)
+      return h(diff_record[field]).gsub(/\r?\n/, '<span class="paragraph-mark">¶</span><br>').html_safe
+    end
 
     pattern = Regexp.new('(?:<.+?>)|(?:\w+)|(?:[ \t]+)|(?:\r?\n)|(?:.+?)')
     DiffBuilder.new(record[field], other[field], pattern).build
+  end
+
+  def diff_name_html(this_name, other_name)
+    DiffBuilder.new(this_name, other_name, Regexp.new('.*')).build
   end
 
   def status_diff_html(record, type)
