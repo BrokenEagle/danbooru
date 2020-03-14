@@ -1,8 +1,4 @@
 body.a-index {
-  ul#version-type-list, ul#version-type-list li {
-    display: inline;
-  }
-
   div#p-revert-listing {
     display: flex;
 
@@ -14,4 +10,8 @@ body.a-index {
   div#p-revert-listing  > article.post-preview {
     margin-top: 2em;
   }
+}
+
+ul#version-type-list, ul#version-type-list li {
+  display: inline;
 }

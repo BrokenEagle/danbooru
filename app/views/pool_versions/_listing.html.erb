@@ -2,7 +2,7 @@
 
     <%= table_for @pool_versions, {class: "striped autofit", width: "100%"} do |t| %>
       <% t.column column: "diff", width: "3%" do |pool_version| %>
-        <%= link_to_if pool_version.text_field_changed(params[:type]), "diff", diff_pool_version_path(pool_version.id) %>
+        <%= link_to_if pool_version.text_field_changed(params[:type]), "diff", diff_pool_version_path(pool_version.id, type: params[:type]) %>
       <% end %>
       <% t.column "Pool", td: {class: "diff-body"} do |pool_version| %>
         <%= link_to pool_version.pretty_name, pool_path(pool_version.pool_id), class: "pool-category-#{pool_version.pool.category}" %>

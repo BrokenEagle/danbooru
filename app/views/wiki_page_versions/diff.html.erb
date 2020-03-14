@@ -4,13 +4,19 @@
 <%= render "wiki_pages/sidebar" %>
 
 <% content_for(:content) do %>
-  <h1>Wiki Page: <%= @thispage.title %></h1>
+  <h1>Wiki Page Comparison: <%= link_to @thispage.title, wiki_page_versions_path(search: { wiki_page_id: @thispage.wiki_page_id }, type: params[:type], anchor: "wiki-page-version-#{@thispage.id}"), class: "tag-type-#{@thispage.wiki_page.category_name}" %></h1>
 
-  <p>Showing differences between <%= compact_time @thispage.updated_at %> (<%= link_to_user @thispage.updater %>) and <%= compact_time @otherpage.updated_at %> (<%= link_to_user @otherpage.updater %>)</p>
+  <% if params[:type].present? %>
+    <%= render "versions/types" %>
+  <% end %>
 
-  <%= wiki_other_names_diff(@thispage, @otherpage) %>
+  <% if @otherpage.present? %>
+    <p>Showing differences between <%= compact_time @thispage.updated_at %> (<%= link_to_user @thispage.updater %>) and <%= compact_time @otherpage.updated_at %> (<%= link_to_user @otherpage.updater %>)</p>
 
-  <div class="diff-body">
-    <%= diff_body_html(@thispage, @otherpage, :body) %>
-  </div>
+    <%= wiki_other_names_diff(@thispage, @otherpage) %>
+
+    <div class="diff-body">
+      <%= diff_body_html(@thispage, @otherpage, :body) %>
+    </div>
+  <% end %>
 <% end %>

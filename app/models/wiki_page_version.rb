@@ -30,6 +30,21 @@ class WikiPageVersion < ApplicationRecord
     @previous.first
   end
 
+  def subsequent
+    @subsequent ||= begin
+      WikiPageVersion.where("wiki_page_id = ? and id > ?", wiki_page_id, id).order("id asc").limit(1).to_a
+    end
+    @subsequent.first
+  end
+
+  def altered
+    subsequent.present? && subsequent.updater_id != updater_id ? subsequent : nil
+  end
+
+  def current
+    wiki_page
+  end
+
   def self.status_fields
     {
       body: "Body",
@@ -40,16 +55,27 @@ class WikiPageVersion < ApplicationRecord
     }
   end
 
-  def other_names_changed
-    ((other_names - previous.other_names) | (previous.other_names - other_names)).length > 0
+  def other_names_changed(type)
+    other = self.send(type)
+    ((other_names - other.other_names) | (other.other_names - other_names)).length > 0
   end
 
-  def was_deleted
-    is_deleted && !previous.is_deleted
+  def was_deleted(type)
+    other = self.send(type)
+    if type == "previous"
+      is_deleted && !other.is_deleted
+    else
+      !is_deleted && other.is_deleted
+    end
   end
 
-  def was_undeleted
-    !is_deleted && previous.is_deleted
+  def was_undeleted(type)
+    other = self.send(type)
+    if type == "previous"
+      !is_deleted && other.is_deleted
+    else
+      is_deleted && !other.is_deleted
+    end
   end
 
   def self.available_includes

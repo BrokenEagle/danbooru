@@ -160,7 +160,7 @@ class PoolVersion < ApplicationRecord
 
   def text_field_changed(type)
     other = self.send(type)
-    other.present? && (name != other.name || description != other.description)
+    other.present? && description != other.description
   end
 
   def pretty_name

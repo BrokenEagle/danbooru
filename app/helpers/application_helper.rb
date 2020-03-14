@@ -375,7 +375,7 @@ module ApplicationHelper
 
   def nav_link_match(controller, url)
     url =~ case controller
-    when "sessions", "users", "admin/users"
+    when "sessions", "users", "maintenance/user/password_resets", "admin/users"
       /^\/(session|users)/
 
     when "comments"
