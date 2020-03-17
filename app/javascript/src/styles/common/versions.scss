@@ -11,3 +11,15 @@ body.a-index {
     margin-top: 2em;
   }
 }
+
+div#version-comparisons {
+  margin-bottom: 1em;
+
+  span {
+    font-weight: bold;
+  }
+
+  ul#version-comparisons-list, ul#version-comparisons-list li {
+    display: inline;
+  }
+}

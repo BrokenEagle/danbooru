@@ -99,51 +99,41 @@ class PostVersion < ApplicationRecord
     @previous.first
   end
 
+  def subsequent
+    @subsequent ||= begin
+      PostVersion.where("post_id = ? and version > ?", post_id, version).order("version asc").limit(1).to_a
+    end
+    @subsequent.first
+  end
+
+  def altered
+    subsequent.present? && subsequent.updater_id != updater_id ? subsequent : nil
+  end
+
+  def current
+    post
+  end
+
   def visible?
     post&.visible?
   end
 
   def self.status_fields
     {
-      tags: "Tags",
+      tags_changed: "Tags",
       rating: "Rating",
       parent_id: "Parent",
       source: "Source",
     }
   end
 
-  def diff(version = nil)
-    if post.nil?
-      latest_tags = tag_array
+  def tags_changed(type)
+    other = self.send(type)
+    if type == "current"
+      tags != other.tag_string
     else
-      latest_tags = post.tag_array
-      latest_tags << "rating:#{post.rating}" if post.rating.present?
-      latest_tags << "parent:#{post.parent_id}" if post.parent_id.present?
-      latest_tags << "source:#{post.source}" if post.source.present?
+      tags != other.tags
     end
-
-    new_tags = tag_array
-    new_tags << "rating:#{rating}" if rating.present?
-    new_tags << "parent:#{parent_id}" if parent_id.present?
-    new_tags << "source:#{source}" if source.present?
-
-    old_tags = version.present? ? version.tag_array : []
-    if version.present?
-      old_tags << "rating:#{version.rating}" if version.rating.present?
-      old_tags << "parent:#{version.parent_id}" if version.parent_id.present?
-      old_tags << "source:#{version.source}" if version.source.present?
-    end
-
-    added_tags = new_tags - old_tags
-    removed_tags = old_tags - new_tags
-
-    return {
-      :added_tags => added_tags,
-      :removed_tags => removed_tags,
-      :obsolete_added_tags => added_tags - latest_tags,
-      :obsolete_removed_tags => removed_tags & latest_tags,
-      :unchanged_tags => new_tags & old_tags
-    }
   end
 
   def changes
