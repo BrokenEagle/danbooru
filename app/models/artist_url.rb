@@ -20,11 +20,9 @@ class ArtistUrl < ApplicationRecord
       nil
     else
       url = url.sub(%r!^https://!, "http://")
-      url = url.sub(%r!^http://([^/]+)!i) { |domain| domain.downcase }
       url = url.sub(%r!^http://blog\d+\.fc2!, "http://blog.fc2")
       url = url.sub(%r!^http://blog-imgs-\d+\.fc2!, "http://blog.fc2")
       url = url.sub(%r!^http://blog-imgs-\d+-\w+\.fc2!, "http://blog.fc2")
-      # url = url.sub(%r!^(http://seiga.nicovideo.jp/user/illust/\d+)\?.+!, '\1/')
       url = url.sub(%r!^http://pictures.hentai-foundry.com//!, "http://pictures.hentai-foundry.com/")
 
       # the strategy won't always work for twitter because it looks for a status
@@ -97,7 +95,15 @@ class ArtistUrl < ApplicationRecord
   end
 
   def normalize
+    # Perform some normalization with Addressable on the URL itself
+    # - Converts scheme and hostname to downcase
+    # - Converts unicode hostname to Punycode
+    uri = Addressable::URI.parse(url)
+    uri.site = uri.normalized_site
+    self.url = uri.to_s
     self.normalized_url = self.class.normalize(url)
+  rescue Addressable::URI::InvalidURIError
+    # Don't bother normalizing the URL if there is errors
   end
 
   def initialize_normalized_url
