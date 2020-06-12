@@ -328,6 +328,7 @@ module Danbooru
     end
 
     # http://tinysubversions.com/notes/mastodon-bot/
+    # https://pawoo.net/settings/applications
     def pawoo_client_id
       nil
     end
@@ -387,9 +388,11 @@ module Danbooru
     end
 
     def twitter_api_key
+      nil
     end
 
     def twitter_api_secret
+      nil
     end
 
     # you should override this
@@ -451,6 +454,7 @@ module Danbooru
     end
 
     def aws_sqs_archives_url
+      nil
     end
 
     # Use a recaptcha on the signup page to protect against spambots creating new accounts.
