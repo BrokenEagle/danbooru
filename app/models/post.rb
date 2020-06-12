@@ -30,7 +30,7 @@ class Post < ApplicationRecord
   before_save :update_tag_post_counts
   before_save :set_tag_counts
   before_create :autoban
-  after_save :create_version
+  after_save :create_version2
   after_save :update_parent_on_save
   after_save :apply_post_metatags
   after_commit :delete_files, :on => :destroy
@@ -1056,13 +1056,83 @@ class Post < ApplicationRecord
     end
 
     def merge_version?
-      prev = versions.last
-      prev && prev.updater_id == CurrentUser.user.id && prev.updated_at > 1.hour.ago
+      last&.updater_id == CurrentUser.id && last.updated_at > 1.hour.ago
     end
 
     def create_new_version
       User.where(id: CurrentUser.id).update_all("post_update_count = post_update_count + 1")
       PostVersion.queue(self) if PostVersion.enabled?
+    end
+
+    def create_version2
+      if saved_change_to_watched_attributes? && CurrentUser.user
+        if merge_version?
+          merge_version2
+        else
+          create_new_version2
+        end
+      end
+    end
+
+    def merge_version2
+      last.update(
+        tags: tag_string,
+        added_tags: added_tags2,
+        removed_tags: removed_tags2,
+        rating: rating,
+        rating_changed: rating_changed2,
+        parent_id: parent_id,
+        parent_changed: parent_changed2,
+        source: source,
+        source_changed: source_changed2
+      )
+    end
+
+    def create_new_version2
+      versions.create(
+        :updater_id => CurrentUser.user.id,
+        :updater_ip_addr => CurrentUser.ip_addr,
+        :version => (last&.version || 0) + 1,
+        :tags => tag_string,
+        :added_tags => added_tags2,
+        :removed_tags => removed_tags2,
+        :rating => rating,
+        :rating_changed => rating_changed2,
+        :parent_id => parent_id,
+        :parent_changed => parent_changed2,
+        :source => source,
+        :source_changed => source_changed2,
+        :booru_id => 1
+      )
+      @last = nil #Fixes an error with tests
+    end
+
+    def last
+      @last ||= begin
+        temp = versions.last
+        temp.present? ? [temp] : []
+      end
+      @last.first
+    end
+
+    def added_tags2
+      versions.last.nil? ? tag_array : tag_array - versions.last.tag_array
+    end
+
+    def removed_tags2
+      versions.last.nil? ? [] : versions.last.tag_array - tag_array
+    end
+
+    def rating_changed2
+      versions.last.nil? || rating != versions.last.rating
+    end
+
+    def parent_changed2
+      versions.last.nil? || parent_id != versions.last.parent_id
+    end
+
+    def source_changed2
+      versions.last.nil? || source != versions.last.source
     end
 
     def revert_to(target)

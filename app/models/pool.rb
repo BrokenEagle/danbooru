@@ -10,7 +10,7 @@ class Pool < ApplicationRecord
   validate :updater_can_edit_deleted
   before_validation :normalize_post_ids
   before_validation :normalize_name
-  after_save :create_version
+  after_save :create_version2
   after_create :synchronize!
 
   deletable
@@ -239,6 +239,14 @@ class Pool < ApplicationRecord
     post_count > 0 ? Post.find(post_ids.first) : nil
   end
 
+    def saved_change_to_watched_attributes?
+      saved_change_to_name? || saved_change_to_description? || saved_change_to_post_ids? || saved_change_to_is_deleted? || saved_change_to_category?
+    end
+
+    def merge_version?
+      last && last.updater_id == CurrentUser.user.id && last.updated_at > 1.hour.ago
+    end
+
   def create_version(updater: CurrentUser.user, updater_ip_addr: CurrentUser.ip_addr)
     if PoolVersion.enabled?
       PoolVersion.queue(self, updater, updater_ip_addr)
@@ -246,6 +254,74 @@ class Pool < ApplicationRecord
       Rails.logger.warn("Archive service is not configured. Pool versions will not be saved.")
     end
   end
+
+    def create_version2
+      if saved_change_to_watched_attributes?
+        if merge_version?
+          merge_version2
+        else
+          create_new_version2
+        end
+      end
+    end
+
+    def merge_version2
+      last.update(
+        :added_post_ids => added_post_ids2,
+        :removed_post_ids => removed_post_ids2,
+        :description => description,
+        :description_changed => description_changed2,
+        :name => name,
+        :name_changed => name_changed2,
+        :is_active => is_active,
+        :is_deleted => is_deleted,
+        :category => category,
+      )
+    end
+
+    def create_new_version2
+      versions.create!(
+        :pool_id => id,
+        :version => (last&.version || 0) + 1,
+        :updater_id => CurrentUser.user.id,
+        :updater_ip_addr => CurrentUser.ip_addr,
+        :post_ids => post_ids,
+        :added_post_ids => added_post_ids2,
+        :removed_post_ids => removed_post_ids2,
+        :description => description,
+        :description_changed => description_changed2,
+        :name => name,
+        :name_changed => name_changed2,
+        :is_active => is_active,
+        :is_deleted => is_deleted,
+        :category => category,
+        :booru_id => 1
+      )
+    end
+
+    def last
+      @last ||= begin
+        temp = versions.last
+        temp.present? ? [temp] : []
+      end
+      @last.first
+    end
+
+    def added_post_ids2
+      last.nil? ? post_ids : post_ids - last.post_ids
+    end
+
+    def removed_post_ids2
+      last.nil? ? [] : last.post_ids - post_ids
+    end
+
+    def description_changed2
+      last.nil? || description != versions.last.description
+    end
+
+    def name_changed2
+      last.nil? || name != versions.last.name
+    end
 
   def last_page
     (post_count / CurrentUser.user.per_page.to_f).ceil
