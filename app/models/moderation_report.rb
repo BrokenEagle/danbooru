@@ -81,11 +81,15 @@ class ModerationReport < ApplicationRecord
     user.is_moderator? ? all : none
   end
 
-  def self.search(params)
+  def self.search(params, *args)
     q = super
-    q = q.search_attributes(params, :model_type, :model_id, :creator_id)
+    q = q.search_attributes(params)
 
     q.apply_default_order(params)
+  end
+
+  def self.searchable_includes
+    [:creator, :model]
   end
 
   def self.available_includes

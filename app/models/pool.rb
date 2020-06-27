@@ -349,4 +349,8 @@ class Pool < ApplicationRecord
       errors[:name] << "cannot contain only digits"
     end
   end
+
+  def self.searchable_includes
+    [:posts]
+  end
 end

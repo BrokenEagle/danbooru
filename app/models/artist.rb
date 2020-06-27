@@ -258,12 +258,6 @@ class Artist < ApplicationRecord
         q = q.url_matches(params[:url_matches])
       end
 
-      if params[:has_tag].to_s.truthy?
-        q = q.where(name: Tag.nonempty.select(:name))
-      elsif params[:has_tag].to_s.falsy?
-        q = q.where.not(name: Tag.nonempty.select(:name))
-      end
-
       case params[:order]
       when "name"
         q = q.order("artists.name")
@@ -286,6 +280,18 @@ class Artist < ApplicationRecord
   include TagMethods
   include BanMethods
   extend SearchMethods
+
+  def self.has_any
+    undeleted
+  end
+
+  def self.model_restriction(table)
+    super.where(table[:is_deleted].eq(false))
+  end
+
+  def self.searchable_includes
+    [:urls, :wiki_page, :tag_alias, :tag]
+  end
 
   def self.available_includes
     [:members, :urls, :wiki_page, :tag_alias, :tag]

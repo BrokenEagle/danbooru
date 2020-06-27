@@ -3,7 +3,7 @@ require 'test_helper'
 class PostAppealsControllerTest < ActionDispatch::IntegrationTest
   context "The post appeals controller" do
     setup do
-      @user = create(:user)
+      @user = create(:user, name: "orin")
     end
 
     context "new action" do
@@ -24,8 +24,11 @@ class PostAppealsControllerTest < ActionDispatch::IntegrationTest
     context "index action" do
       setup do
         as(@user) do
-          @post = create(:post, :is_deleted => true)
-          @post_appeal = create(:post_appeal, :post => @post)
+          @post = create(:post, id: 101, is_deleted: true)
+          @post_appeal = create(:post_appeal, post: @post, creator: @user)
+          @unrelated_appeal = create(:post_appeal, reason: "Good.")
+          @resolved_appeal = create(:post_appeal)
+          @resolved_appeal.post.update(is_deleted: false)
         end
       end
 
@@ -34,16 +37,13 @@ class PostAppealsControllerTest < ActionDispatch::IntegrationTest
         assert_response :success
       end
 
-      should "render for json" do
-        get post_appeals_path, as: :json
-        assert_response :success
-      end
+      should respond_to_search({}).with { [@resolved_appeal, @unrelated_appeal, @post_appeal] }
+      should respond_to_search(reason_matches: "Good.").with { @unrelated_appeal }
 
-      context "with search parameters" do
-        should "render" do
-          get_auth post_appeals_path, @user, params: {:search => {:post_id => @post_appeal.post_id}}
-          assert_response :success
-        end
+      context "using includes" do
+        should respond_to_search(post_id: 101).with { @post_appeal }
+        should respond_to_search(post: {is_deleted: "true"}).with { [@unrelated_appeal, @post_appeal] }
+        should respond_to_search(creator_name: "orin").with { @post_appeal }
       end
     end
 
